@@ -27,9 +27,12 @@ export class WorkerError extends Error {
   }
 }
 
-/** Мінімальний тип для Service Binding — без залежності від @cloudflare/workers-types */
+/** Мінімальний тип для Service Binding */
 type ServiceBinding = {
-  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+  fetch: (
+    input: string | URL | Request,
+    init?: RequestInit,
+  ) => Promise<Response>;
 };
 
 /** Отримує Service Binding LOADER з Cloudflare-контексту, якщо він є. */
