@@ -61,7 +61,9 @@ export function isLinkvertiseReferer(referer: string): boolean {
       host === "link-to.net" ||
       host.endsWith(".link-to.net") ||
       host === "link-to.me" ||
-      host.endsWith(".link-to.me")
+      host.endsWith(".link-to.me") ||
+      host === "linkvertise.link" ||
+      host.endsWith(".linkvertise.link")
     );
   } catch {
     return false;
