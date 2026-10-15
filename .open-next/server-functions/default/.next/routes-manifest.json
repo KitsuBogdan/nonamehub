@@ -73,6 +73,12 @@
       "namedRegex": "^/about(?:/)?$"
     },
     {
+      "page": "/api/debug-worker",
+      "regex": "^/api/debug\\-worker(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/debug\\-worker(?:/)?$"
+    },
+    {
       "page": "/icon.png",
       "regex": "^/icon\\.png(?:/)?$",
       "routeKeys": {},

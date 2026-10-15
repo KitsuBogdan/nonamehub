@@ -2,6 +2,7 @@
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
   "/about/page": "/about",
+  "/api/debug-worker/route": "/api/debug-worker",
   "/api/key/[slug]/route": "/api/key/[slug]",
   "/api/token/[slug]/route": "/api/token/[slug]",
   "/icon.png/route": "/icon.png",
