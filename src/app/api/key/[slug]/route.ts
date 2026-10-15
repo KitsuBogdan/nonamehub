@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getResource } from "@/data/resources";
 import { generateKey, WorkerError } from "@/lib/worker";
-import { verifyToken, isLinkvertiseReferer } from "@/lib/token";
+import { verifyToken, isAllowedReferer } from "@/lib/token";
 import { isUsed, markUsed } from "@/lib/usedTokens";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000;
@@ -34,14 +34,12 @@ export async function GET(
   if (isUsed(token)) return reject("token_used");
   markUsed(token, TOKEN_TTL_MS);
 
-  // 4) Referer від Linkvertise (тільки в production;
-  //    на localhost Linkvertise не працює — інакше тестувати неможливо)
-  const isProduction = process.env.NODE_ENV === "production";
-  if (isProduction) {
-    const referer = request.headers.get("referer") ?? "";
-    if (!isLinkvertiseReferer(referer)) {
-      return reject("invalid_referer");
-    }
+  // 4) Referer
+  const referer = request.headers.get("referer") ?? "";
+  console.log("[api/key] referer:", JSON.stringify(referer));
+
+  if (!isAllowedReferer(referer)) {
+    return reject("invalid_referer");
   }
 
   // 5) Генеруємо ключ

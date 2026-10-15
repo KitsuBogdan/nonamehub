@@ -3,17 +3,12 @@ import crypto from "crypto";
 
 const SECRET = process.env.NONAME_TOKEN_SECRET ?? "";
 
-/** TTL токена — 15 хвилин. Достатньо, щоб пройти Linkvertise. */
 export const TOKEN_TTL_MS = 15 * 60 * 1000;
 
 function hmac(payload: string): string {
   return crypto.createHmac("sha256", SECRET).update(payload).digest("hex");
 }
 
-/**
- * Формат токена: <expiresAt>.<signature>
- * payload підпису: <slug>.<expiresAt>
- */
 export function signToken(slug: string, ttlMs = TOKEN_TTL_MS): string {
   if (!SECRET) {
     throw new Error("NONAME_TOKEN_SECRET is not configured");
@@ -68,4 +63,30 @@ export function isLinkvertiseReferer(referer: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * ТИМЧАСОВО: для тестування дозволяємо свій власний домен і порожній Referer.
+ * Перед продакшеном вимкнути (поставити false).
+ */
+export const ALLOW_SELF_REFERER_FOR_TESTING = true;
+
+export function isAllowedReferer(referer: string): boolean {
+  if (ALLOW_SELF_REFERER_FOR_TESTING) {
+    if (!referer) return true; // прямий доступ
+    try {
+      const url = new URL(referer);
+      const host = url.hostname.toLowerCase();
+      if (
+        host === "nonamehub.nonamescr.workers.dev" ||
+        host === "localhost" ||
+        host === "127.0.0.1"
+      ) {
+        return true;
+      }
+    } catch {
+      return true;
+    }
+  }
+  return isLinkvertiseReferer(referer);
 }
