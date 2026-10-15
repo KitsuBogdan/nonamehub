@@ -1,4 +1,5 @@
 // src/lib/worker.ts
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const WORKER_URL =
   process.env.NONAME_WORKER_URL ?? "https://loader.nonamescr.workers.dev";
@@ -26,6 +27,20 @@ export class WorkerError extends Error {
   }
 }
 
+/** Отримує Service Binding LOADER з Cloudflare-контексту, якщо він є. */
+function getLoaderBinding(): Fetcher | null {
+  try {
+    const ctx = getCloudflareContext();
+    const binding = (ctx.env as Record<string, unknown>).LOADER;
+    if (binding && typeof (binding as Fetcher).fetch === "function") {
+      return binding as Fetcher;
+    }
+  } catch {
+    /* не Cloudflare — локальна розробка */
+  }
+  return null;
+}
+
 export async function generateKey(options: {
   name?: string;
   expiresDays?: number;
@@ -47,16 +62,26 @@ export async function generateKey(options: {
   if (options.maxUses != null)
     url.searchParams.set("max_uses", String(options.maxUses));
 
+  const loader = getLoaderBinding();
+  const targetUrl = url.toString();
+
   let res: Response;
   try {
-    res = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${ADMIN_TOKEN}`,
-      },
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
+    if (loader) {
+      // Продакшн: через Service Binding (обходить обмеження 1042)
+      res = await loader.fetch(targetUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
+      });
+    } else {
+      // Локальна розробка: звичайний fetch
+      res = await fetch(targetUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+      });
+    }
   } catch {
     throw new WorkerError(
       "Could not reach the key server",
@@ -75,8 +100,9 @@ export async function generateKey(options: {
     throw new WorkerError("Wrong HTTP method", 500, "method_not_allowed");
   }
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
     throw new WorkerError(
-      `Worker responded with ${res.status}`,
+      `Worker responded with ${res.status}: ${body.slice(0, 200)}`,
       502,
       "worker_error",
     );
