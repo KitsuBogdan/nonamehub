@@ -12,7 +12,7 @@ export default function LinkvertiseScript() {
       />
       <Script id="linkvertise-init" strategy="afterInteractive">
         {`linkvertise(1343514, {
-            whitelist: ["nonamehub.nonamescr.workers.dev"],
+            whitelist: ["nonamehub.fyi", "www.nonamehub.fyi"],
             blacklist: []
         });`}
       </Script>

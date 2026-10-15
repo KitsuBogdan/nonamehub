@@ -15,8 +15,8 @@
     }
   ],
   "vars": {
-    "NEXT_PUBLIC_SITE_URL": "https://nonamehub.nonamescr.workers.dev",
-    "NONAME_WORKER_URL": "https://loader.nonamescr.workers.dev"
+  "NEXT_PUBLIC_SITE_URL": "https://nonamehub.fyi",
+  "NONAME_WORKER_URL": "https://loader.nonamescr.workers.dev"
   },
   "observability": {
     "enabled": true
