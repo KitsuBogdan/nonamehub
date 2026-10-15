@@ -1,0 +1,3 @@
+module.exports=[82437,a=>{"use strict";a.s(["f",0,[{slug:"uni-key",title:"Access Key to NonameHub Resources",description:"Universal access key for all NonameHub scripts and tools. Get it once — use it everywhere.",category:"Key",type:"Key",tag:"KEY",color:"violet",version:"0.1.0",steps:2,downloads:"0",keyConfig:{expiresDays:7,maxUses:1},keyUsage:"Paste this key into Config.Key at the top of the script."}]])}];
+
+//# sourceMappingURL=src_data_resources_ts_1z2p-ukrnavsg._.js.map

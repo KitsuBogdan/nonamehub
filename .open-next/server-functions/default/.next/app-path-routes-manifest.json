@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/about/page": "/about",
+  "/api/key/[slug]/route": "/api/key/[slug]",
+  "/api/token/[slug]/route": "/api/token/[slug]",
+  "/icon.png/route": "/icon.png",
+  "/page": "/",
+  "/privacy/page": "/privacy",
+  "/resource/[slug]/page": "/resource/[slug]",
+  "/resources/page": "/resources",
+  "/robots.txt/route": "/robots.txt",
+  "/sitemap.xml/route": "/sitemap.xml",
+  "/terms/page": "/terms"
+}
