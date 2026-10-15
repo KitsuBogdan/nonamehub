@@ -27,13 +27,23 @@ export class WorkerError extends Error {
   }
 }
 
+/** Мінімальний тип для Service Binding — без залежності від @cloudflare/workers-types */
+type ServiceBinding = {
+  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+};
+
 /** Отримує Service Binding LOADER з Cloudflare-контексту, якщо він є. */
-function getLoaderBinding(): Fetcher | null {
+function getLoaderBinding(): ServiceBinding | null {
   try {
     const ctx = getCloudflareContext();
-    const binding = (ctx.env as Record<string, unknown>).LOADER;
-    if (binding && typeof (binding as Fetcher).fetch === "function") {
-      return binding as Fetcher;
+    const env = ctx.env as Record<string, unknown>;
+    const binding = env.LOADER;
+    if (
+      binding &&
+      typeof binding === "object" &&
+      typeof (binding as ServiceBinding).fetch === "function"
+    ) {
+      return binding as ServiceBinding;
     }
   } catch {
     /* не Cloudflare — локальна розробка */
