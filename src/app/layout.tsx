@@ -7,7 +7,6 @@ import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/Toast";
 import ScrollTop from "@/components/ScrollTop";
 
-// import LinkvertiseScript from "@/components/LinkvertiseScript";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
