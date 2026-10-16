@@ -69,7 +69,7 @@ export function isLinkvertiseReferer(referer: string): boolean {
  * ТИМЧАСОВО: для тестування дозволяємо свій власний домен і порожній Referer.
  * Перед продакшеном вимкнути (поставити false).
  */
-export const ALLOW_SELF_REFERER_FOR_TESTING = true;
+export const ALLOW_SELF_REFERER_FOR_TESTING = false;
 
 export function isAllowedReferer(referer: string): boolean {
   if (ALLOW_SELF_REFERER_FOR_TESTING) {
