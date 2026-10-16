@@ -1,9 +1,9 @@
 // src/lib/worker.ts
+
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const WORKER_URL =
   process.env.NONAME_WORKER_URL ?? "https://loader.nonamescr.workers.dev";
-
 const ADMIN_TOKEN = process.env.NONAME_ADMIN_TOKEN;
 
 export type GeneratedKey = {
@@ -13,6 +13,7 @@ export type GeneratedKey = {
     expiresDays?: number;
     maxUses?: number;
     name?: string;
+    keyType?: string;
   };
 };
 
@@ -27,15 +28,10 @@ export class WorkerError extends Error {
   }
 }
 
-/** Мінімальний тип для Service Binding */
 type ServiceBinding = {
-  fetch: (
-    input: string | URL | Request,
-    init?: RequestInit,
-  ) => Promise<Response>;
+  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 };
 
-/** Отримує Service Binding LOADER з Cloudflare-контексту, якщо він є. */
 function getLoaderBinding(): ServiceBinding | null {
   try {
     const ctx = getCloudflareContext();
@@ -58,6 +54,8 @@ export async function generateKey(options: {
   name?: string;
   expiresDays?: number;
   maxUses?: number;
+  /** "regular" | "premium" */
+  keyType?: string;
 }): Promise<GeneratedKey> {
   if (!ADMIN_TOKEN) {
     throw new WorkerError(
@@ -74,20 +72,20 @@ export async function generateKey(options: {
     url.searchParams.set("expires", String(options.expiresDays));
   if (options.maxUses != null)
     url.searchParams.set("max_uses", String(options.maxUses));
+  if (options.keyType)
+    url.searchParams.set("type", options.keyType);
 
   const loader = getLoaderBinding();
   const targetUrl = url.toString();
-
   let res: Response;
+
   try {
     if (loader) {
-      // Продакшн: через Service Binding (обходить обмеження 1042)
       res = await loader.fetch(targetUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
       });
     } else {
-      // Локальна розробка: звичайний fetch
       res = await fetch(targetUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
@@ -103,15 +101,13 @@ export async function generateKey(options: {
     );
   }
 
-  if (res.status === 401) {
+  if (res.status === 401)
     throw new WorkerError("Invalid admin token", 500, "invalid_token");
-  }
-  if (res.status === 429) {
+  if (res.status === 429)
     throw new WorkerError("Too many requests", 429, "rate_limited");
-  }
-  if (res.status === 405) {
+  if (res.status === 405)
     throw new WorkerError("Wrong HTTP method", 500, "method_not_allowed");
-  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new WorkerError(
@@ -122,7 +118,6 @@ export async function generateKey(options: {
   }
 
   const data = (await res.json()) as GeneratedKey;
-
   if (!data.key || typeof data.key !== "string") {
     throw new WorkerError(
       "Worker did not return a key",
@@ -130,6 +125,5 @@ export async function generateKey(options: {
       "malformed_response",
     );
   }
-
   return data;
 }

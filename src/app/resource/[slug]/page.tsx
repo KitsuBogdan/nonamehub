@@ -16,9 +16,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const resource = getResource(slug);
-  if (!resource) {
-    return { title: "Resource not found" };
-  }
+  if (!resource) return { title: "Resource not found" };
   return {
     title: resource.title,
     description: resource.description,
@@ -63,7 +61,7 @@ export default async function ResourcePage({
               <Link
                 key={r.slug}
                 href={`/resource/${r.slug}`}
-                className="group rounded-xl border border-white/10 bg-white/[0.03] p-4 transition hover:-translate-y-0.5 hover:border-violet-400/40"
+                className="group rounded-xl border border-white/10 bg-white/3 p-4 transition hover:-translate-y-0.5 hover:border-violet-400/40"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold text-violet-300">

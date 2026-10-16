@@ -1,41 +1,95 @@
 // src/lib/token.ts
-import crypto from "crypto";
+const SECRET = process.env.TOKEN_SECRET ?? "change-me-in-production";
+const TTL_MS = 10 * 60 * 1000; // 10 хв на весь флоу (усі 3 кроки)
 
-const SECRET = process.env.NONAME_TOKEN_SECRET ?? "";
+export type TokenPayload = {
+  slug: string;
+  step: number;
+  exp: number;
+};
 
-export const TOKEN_TTL_MS = 5 * 60 * 1000;
-
-function hmac(payload: string): string {
-  return crypto.createHmac("sha256", SECRET).update(payload).digest("hex");
+async function getKey(): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  return crypto.subtle.importKey(
+    "raw",
+    enc.encode(SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
 }
 
-export function signToken(slug: string, ttlMs = TOKEN_TTL_MS): string {
-  if (!SECRET) {
-    throw new Error("NONAME_TOKEN_SECRET is not configured");
+function b64url(bytes: ArrayBuffer | Uint8Array): string {
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let str = "";
+  for (let i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
+  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function unb64url(str: string): Uint8Array {
+  const pad = "=".repeat((4 - (str.length % 4)) % 4);
+  const b64 = str.replace(/-/g, "+").replace(/_/g, "/") + pad;
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+export async function createToken(slug: string, step = 0): Promise<string> {
+  const payload: TokenPayload = {
+    slug,
+    step,
+    exp: Date.now() + TTL_MS,
+  };
+  const payloadStr = JSON.stringify(payload);
+  const payloadB64 = b64url(new TextEncoder().encode(payloadStr));
+
+  const key = await getKey();
+  const sigBuf = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payloadB64),
+  );
+  const sigB64 = b64url(sigBuf);
+
+  return `${payloadB64}.${sigB64}`;
+}
+
+export async function verifyToken(
+  slug: string,
+  token: string,
+): Promise<TokenPayload | null> {
+  if (!token || typeof token !== "string") return null;
+
+  const [payloadB64, sigB64] = token.split(".");
+  if (!payloadB64 || !sigB64) return null;
+
+  const key = await getKey();
+  const sigBuf = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payloadB64),
+  );
+  const expectedSig = b64url(sigBuf);
+
+  // timing-safe порівняння
+  if (expectedSig.length !== sigB64.length) return null;
+  let diff = 0;
+  for (let i = 0; i < expectedSig.length; i++) {
+    diff |= expectedSig.charCodeAt(i) ^ sigB64.charCodeAt(i);
   }
-  const exp = Date.now() + ttlMs;
-  const sig = hmac(`${slug}.${exp}`);
-  return `${exp}.${sig}`;
-}
-
-export function verifyToken(slug: string, token: string): boolean {
-  if (!SECRET) return false;
-  const parts = token.split(".");
-  if (parts.length !== 2) return false;
-
-  const [expStr, sig] = parts;
-  const exp = Number(expStr);
-  if (!Number.isFinite(exp)) return false;
-  if (Date.now() > exp) return false;
-
-  const expected = hmac(`${slug}.${exp}`);
-  const a = Buffer.from(sig, "hex");
-  const b = Buffer.from(expected, "hex");
-  if (a.length !== b.length) return false;
+  if (diff !== 0) return null;
 
   try {
-    return crypto.timingSafeEqual(a, b);
+    const json = new TextDecoder().decode(unb64url(payloadB64));
+    const payload = JSON.parse(json) as TokenPayload;
+
+    if (payload.slug !== slug) return null;
+    if (typeof payload.step !== "number") return null;
+    if (payload.exp < Date.now()) return null;
+
+    return payload;
   } catch {
-    return false;
+    return null;
   }
 }

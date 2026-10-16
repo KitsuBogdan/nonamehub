@@ -7,6 +7,17 @@ import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/Toast";
 import ScrollTop from "@/components/ScrollTop";
 
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -61,8 +72,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`...`}>
-      <body className="min-h-full flex flex-col">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans">
         <LanguageProvider>
           <ToastProvider>
             <SiteHeader />

@@ -2,53 +2,134 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { resources } from "@/data/resources";
 import ResourceArtwork from "@/components/ResourceArtwork";
 
 type CategoryKey = "all" | "Scripts" | "Models" | "UI";
 
+type PendingKey = {
+  slug: string;
+  token: string;
+  step: number;
+  ts: number;
+};
+
+const PENDING_TTL_MS = 10 * 60 * 1000;
+
+function readPending(): PendingKey | null {
+  try {
+    const raw = localStorage.getItem("pendingKey");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingKey;
+    if (!parsed?.slug || !parsed?.token) return null;
+    if (Date.now() - parsed.ts > PENDING_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writePending(p: PendingKey): void {
+  try {
+    localStorage.setItem("pendingKey", JSON.stringify(p));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearPending(): void {
+  try {
+    localStorage.removeItem("pendingKey");
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function HomeClient() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("all");
 
-  // Обробка редіректу з Linkvertise: /?hash=XXX
+  // ── Обробка повернення з Linkvertise: /?hash=XXX
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     const params = new URLSearchParams(window.location.search);
     const hash = params.get("hash");
     if (!hash) return;
 
-    let pending: { slug: string; token: string; ts: number } | null = null;
-    try {
-      const raw = localStorage.getItem("pendingKey");
-      if (raw) pending = JSON.parse(raw);
-    } catch {
-      /* ignore */
-    }
+    const pending = readPending();
+    if (!pending) return;
 
-    // TTL 5 хв
-    if (pending && Date.now() - pending.ts > 5 * 60 * 1000) {
-      pending = null;
-    }
+    let cancelled = false;
 
-    if (!pending?.slug || !pending?.token) {
-      return;
-    }
+    (async () => {
+      try {
+        const res = await fetch(`/api/key/${pending.slug}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: pending.token, hash }),
+        });
 
-    try {
-      localStorage.removeItem("pendingKey");
-    } catch {
-      /* ignore */
-    }
+        const data = (await res.json()) as {
+          ok?: boolean;
+          key?: string;
+          nextStep?: number;
+          nextToken?: string;
+          nextUrl?: string;
+          error?: string;
+        };
 
-    const target =
-      `/api/key/${pending.slug}` +
-      `?t=${encodeURIComponent(pending.token)}` +
-      `&hash=${encodeURIComponent(hash)}`;
-    window.location.href = target;
-  }, []);
+        if (cancelled) return;
+
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("hash");
+        window.history.replaceState({}, "", cleanUrl.toString());
+
+        if (data.key) {
+          clearPending();
+          router.push(
+            `/resource/${pending.slug}?key=${encodeURIComponent(data.key)}`,
+          );
+          return;
+        }
+
+        if (
+          data.nextUrl &&
+          typeof data.nextStep === "number" &&
+          data.nextToken
+        ) {
+          writePending({
+            slug: pending.slug,
+            token: data.nextToken,
+            step: data.nextStep,
+            ts: Date.now(),
+          });
+          window.location.assign(data.nextUrl);
+          return;
+        }
+
+        clearPending();
+        router.push(
+          `/resource/${pending.slug}?err=${encodeURIComponent(
+            data.error ?? "unknown",
+          )}`,
+        );
+      } catch (err) {
+        if (cancelled) return;
+        console.error("key-flow error:", err);
+        clearPending();
+        router.push(`/resource/${pending.slug}?err=network`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const categoryTabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: t("catalog.all") },
@@ -64,59 +145,46 @@ export default function HomeClient() {
         activeCategory === "all" || r.category === activeCategory;
       const matchesQuery =
         !q ||
-        `${r.title} ${r.description} ${r.category}`.toLowerCase().includes(q);
+        `${r.title} ${r.description} ${r.category}`
+          .toLowerCase()
+          .includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [query, activeCategory]);
 
   return (
     <main>
-      <section className="hero">
+      {/* ── HERO (solo, центрований) ─────────────────────────── */}
+      <section className="hero hero--solo">
         <div className="hero-grid" aria-hidden="true" />
-        <div className="hero-content">
+
+        <div className="hero-content hero-content--centered">
           <div className="eyebrow">
-            <span className="status-dot" /> {t("hero.eyebrow")}
+            <span className="status-dot" />
+            {t("hero.eyebrow")}
           </div>
-          <h1>
+
+          <h1 className="hero-title">
             {t("hero.title1")}
             <br />
             <span>{t("hero.title2")}</span>
           </h1>
+
           <p className="hero-copy">{t("hero.copy")}</p>
-          <a className="primary-button" href="#catalog">
-            {t("hero.cta")} <span>→</span>
-          </a>
+
+          <div className="hero-actions">
+            <a className="primary-button" href="#catalog">
+              {t("hero.cta")} <span>→</span>
+            </a>
+            <a className="ghost-button" href="#how-it-works">
+              {t("nav.how")}
+            </a>
+          </div>
+
           <div className="hero-note">
             <span className="note-icon">✳</span>
             {t("hero.note")}
           </div>
-        </div>
-
-        <div className="hero-visual" aria-hidden="true">
-          <div className="visual-orbit orbit-one" />
-          <div className="visual-orbit orbit-two" />
-          <div className="visual-core">
-            <div className="core-inner">
-              <span className="core-symbol">N</span>
-              <span className="core-label">NO NAME / NO LIMITS</span>
-            </div>
-          </div>
-          <div className="float-card float-card-top">
-            <span className="float-icon purple">{"</>"}</span>
-            <span>
-              <b>Scripts</b>
-              <small>Make it work</small>
-            </span>
-          </div>
-          <div className="float-card float-card-bottom">
-            <span className="float-icon blue">◇</span>
-            <span>
-              <b>Models & UI</b>
-              <small>Make it yours</small>
-            </span>
-          </div>
-          <span className="visual-star star-one">✳</span>
-          <span className="visual-star star-two">✦</span>
         </div>
       </section>
 
@@ -137,7 +205,11 @@ export default function HomeClient() {
         </div>
 
         <div className="catalog-controls">
-          <div className="category-tabs" role="group" aria-label="Filter by category">
+          <div
+            className="category-tabs"
+            role="group"
+            aria-label="Filter by category"
+          >
             {categoryTabs.map(({ key, label }) => (
               <button
                 key={key}
@@ -175,7 +247,9 @@ export default function HomeClient() {
                 <ResourceArtwork resource={resource} />
                 <div className="resource-card-body">
                   <div className="resource-meta">
-                    <span className={`category-label label-${resource.color}`}>
+                    <span
+                      className={`category-label label-${resource.color}`}
+                    >
                       {resource.category}
                     </span>
                     <span className="download-count">

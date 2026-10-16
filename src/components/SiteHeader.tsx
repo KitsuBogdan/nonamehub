@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLanguage } from "@/lib/i18n";
 import LanguageSwitcher from "./LanguageSwitcher";
 import Brand from "./Brand";
@@ -10,11 +10,15 @@ import Brand from "./Brand";
 export default function SiteHeader() {
   const { t } = useLanguage();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  // Замість окремого `open` — зберігаємо, для якого pathname меню відкрите.
+  // При зміні маршруту open автоматично стає false (openFor !== pathname).
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  const open = openFor === pathname;
+
+  const toggleMenu = () => {
+    setOpenFor((prev) => (prev === pathname ? null : pathname));
+  };
 
   const isHome = pathname === "/";
   const isResources = pathname.startsWith("/resources");
@@ -44,7 +48,7 @@ export default function SiteHeader() {
         <button
           type="button"
           className={`burger ${open ? "open" : ""}`}
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleMenu}
           aria-label="Toggle menu"
           aria-expanded={open}
         >

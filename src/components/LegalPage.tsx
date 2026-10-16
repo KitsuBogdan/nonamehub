@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 
-type Section = { titleKey: any; textKey: any };
+// Витягуємо точний union усіх ключів перекладів із сигнатури t().
+// Це позбавляє від `any` і одночасно дає type-safety:
+// якщо передати неіснуючий ключ — TS зловить помилку.
+type TranslationKey = Parameters<ReturnType<typeof useLanguage>["t"]>[0];
+
+type Section = {
+  titleKey: TranslationKey;
+  textKey: TranslationKey;
+};
 
 export default function LegalPage({
   kickerKey,
@@ -12,10 +20,10 @@ export default function LegalPage({
   introKey,
   sections,
 }: {
-  kickerKey: any;
-  titleKey: any;
-  updatedKey: any;
-  introKey: any;
+  kickerKey: TranslationKey;
+  titleKey: TranslationKey;
+  updatedKey: TranslationKey;
+  introKey: TranslationKey;
   sections: Section[];
 }) {
   const { t } = useLanguage();
@@ -44,7 +52,7 @@ export default function LegalPage({
         {sections.map((s, i) => (
           <section
             key={i}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+            className="rounded-2xl border border-white/10 bg-white/3 p-6"
           >
             <h2 className="font-[Space_Grotesk] text-lg font-semibold">
               {t(s.titleKey)}

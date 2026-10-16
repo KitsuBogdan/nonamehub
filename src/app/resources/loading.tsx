@@ -13,7 +13,7 @@ export default function ResourcesLoading() {
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+            className="overflow-hidden rounded-2xl border border-white/10 bg-white/3"
           >
             <div className="h-36 animate-pulse bg-white/5" />
             <div className="p-5">

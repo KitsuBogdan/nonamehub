@@ -16,7 +16,7 @@ export default function AboutClient() {
         {t("about.back")}
       </Link>
 
-      <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.03] p-6 sm:p-10">
+      <section className="mt-8 rounded-3xl border border-white/10 bg-white/3 p-6 sm:p-10">
         <p className="text-[10px] font-bold tracking-[2px] text-violet-300/80">
           {t("about.kicker")}
         </p>
@@ -48,7 +48,7 @@ export default function AboutClient() {
           </div>
         </div>
 
-        <div className="mt-10 rounded-2xl border border-violet-400/20 bg-violet-400/[0.06] p-6">
+        <div className="mt-10 rounded-2xl border border-violet-400/20 bg-violet-400/6 p-6">
           <h2 className="font-[Space_Grotesk] text-lg font-semibold">
             {t("about.cta.title")}
           </h2>
@@ -57,7 +57,7 @@ export default function AboutClient() {
           </p>
           <Link
             href="/resources"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-violet-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
           >
             {t("about.cta.button")}
           </Link>

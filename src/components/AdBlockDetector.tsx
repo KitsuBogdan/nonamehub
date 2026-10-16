@@ -46,9 +46,9 @@ export default function AdBlockDetector({
 
   if (blocked) {
     return (
-      <div className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
+      <div className="rounded-2xl border border-amber-400/30 bg-amber-400/6 p-5">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-400/10 text-amber-300">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-400/10 text-amber-300">
             !
           </span>
           <div>

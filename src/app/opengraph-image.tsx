@@ -37,7 +37,15 @@ export default async function OG() {
           padding: 60,
         }}
       >
-        <img src={logoUrl} width={90} height={90} alt="" style={{ marginBottom: 36 }} />
+        {/* eslint-disable-next-line @next/next/no-img-element --
+            ImageResponse рендериться через Satori, next/image тут не працює */}
+        <img
+          src={logoUrl}
+          width={90}
+          height={90}
+          alt=""
+          style={{ marginBottom: 36 }}
+        />
 
         <div
           style={{

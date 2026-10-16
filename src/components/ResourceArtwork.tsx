@@ -1,40 +1,41 @@
 // src/components/ResourceArtwork.tsx
+"use client";
+
+import Image from "next/image";
 import type { Resource } from "@/data/resources";
 
+/**
+ * Мапа artwork за slug.
+ * Кожен ресурс має власну обкладинку.
+ * Якщо slug не знайдено — використовується default-cover.
+ */
+const ARTWORK: Record<string, string> = {
+  // Regular key
+  "nn-key": "/key-cover.png",
+
+  // Premium key
+  "nn-key-premium": "/key-cover-premium.png",
+};
+
+const FALLBACK = "/default-cover.png";
+
 export default function ResourceArtwork({ resource }: { resource: Resource }) {
+  const src = ARTWORK[resource.slug] ?? FALLBACK;
+
   return (
-    <div className={`artwork artwork-${resource.color}`} aria-hidden="true">
-      <div className="artwork-glow" />
-      {resource.category === "Scripts" ? (
-        <div className="code-art">
-          <span>local</span> resource = <b>game</b>
-          <br />
-          resource.<i>Parent</i>
-          <br />
-          <span>return</span> resource
-        </div>
-      ) : resource.category === "Models" ? (
-        <div className="model-art">
-          <div className="model-cube model-cube-back" />
-          <div className="model-cube model-cube-front" />
-          <div className="model-orbit" />
-        </div>
-      ) : (
-        <div className="ui-art">
-          <div className="ui-art-top">
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="ui-art-sidebar" />
-          <div className="ui-art-panel">
-            <div />
-            <div />
-            <div />
-          </div>
-        </div>
-      )}
-      <span className="artwork-tag">{resource.tag}</span>
+    <div className="group relative h-36 w-full overflow-hidden bg-white/5">
+      <Image
+        src={src}
+        alt={resource.title}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover transition duration-500 group-hover:scale-105"
+        priority={false}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"
+      />
     </div>
   );
 }

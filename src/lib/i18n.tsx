@@ -5,7 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 export const languages = [
@@ -1025,30 +1025,62 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const STORAGE_KEY = "nonamehub.lang";
+const CHANGE_EVENT = "nonamehub:lang";
+
+// ──────────────────────────────────────────────────────────────
+// External store для мови.
+//
+// useSyncExternalStore сам підписується на зміни і повертає
+// актуальне значення — без setState в ефектах.
+// ──────────────────────────────────────────────────────────────
+
+function isValidLang(code: string | null): code is LangCode {
+  return !!code && languages.some((l) => l.code === code);
+}
+
+function subscribe(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => callback();
+  window.addEventListener("storage", handler);
+  window.addEventListener(CHANGE_EVENT, handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener(CHANGE_EVENT, handler);
+  };
+}
+
+function getSnapshot(): LangCode {
+  if (typeof window === "undefined") return "en";
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (isValidLang(saved)) return saved;
+  } catch {
+    /* localStorage може бути заблокований */
+  }
+  return "en";
+}
+
+function getServerSnapshot(): LangCode {
+  return "en";
+}
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<LangCode>("en");
+  const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
+  // Синхронізуємо DOM-атрибут <html lang="...">.
+  // Це "update external system", а не setState — ESLint чистий.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as LangCode | null;
-      if (saved && translations[saved]) {
-        setLangState(saved);
-        document.documentElement.lang = saved;
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = useCallback((code: LangCode) => {
-    setLangState(code);
     try {
       localStorage.setItem(STORAGE_KEY, code);
     } catch {
       /* ignore */
     }
-    document.documentElement.lang = code;
+    // Тригеримо підписників useSyncExternalStore.
+    window.dispatchEvent(new Event(CHANGE_EVENT));
   }, []);
 
   const t = useCallback(

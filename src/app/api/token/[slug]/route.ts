@@ -1,7 +1,7 @@
 // src/app/api/token/[slug]/route.ts
 import { NextResponse } from "next/server";
 import { getResource } from "@/data/resources";
-import { signToken, TOKEN_TTL_MS } from "@/lib/token";
+import { createToken } from "@/lib/token";
 
 export async function GET(
   _request: Request,
@@ -9,33 +9,13 @@ export async function GET(
 ) {
   const { slug } = await params;
   const resource = getResource(slug);
-
   if (!resource) {
-    return NextResponse.json(
-      { error: "Resource not found", code: "not_found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  try {
-    const token = signToken(slug);
-    return NextResponse.json(
-      {
-        token,
-        expiresAt: Date.now() + TOKEN_TTL_MS,
-      },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        },
-      },
-    );
-  } catch (err) {
-    console.error("Token issue error:", err);
-    return NextResponse.json(
-      { error: "Server not configured", code: "server_not_configured" },
-      { status: 500 },
-    );
-  }
+  const token = await createToken(slug, 0);
+  return NextResponse.json(
+    { token },
+    { headers: { "Cache-Control": "no-store, max-age=0" } },
+  );
 }
