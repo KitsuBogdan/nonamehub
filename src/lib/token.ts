@@ -3,7 +3,7 @@ import crypto from "crypto";
 
 const SECRET = process.env.NONAME_TOKEN_SECRET ?? "";
 
-export const TOKEN_TTL_MS = 15 * 60 * 1000;
+export const TOKEN_TTL_MS = 5 * 60 * 1000;
 
 function hmac(payload: string): string {
   return crypto.createHmac("sha256", SECRET).update(payload).digest("hex");

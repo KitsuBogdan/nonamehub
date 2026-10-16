@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getResource } from "@/data/resources";
 import { generateKey, WorkerError } from "@/lib/worker";
-import { verifyToken, isAllowedReferer } from "@/lib/token";
+import { verifyToken } from "@/lib/token";
 import { isUsed, markUsed } from "@/lib/usedTokens";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000;
@@ -30,15 +30,7 @@ export async function GET(
   // 2) Підпис + TTL
   if (!verifyToken(slug, token)) return reject("invalid_token");
 
-  // 3) Referer — перевіряємо до позначення токена використаним
-  const referer = request.headers.get("referer") ?? "";
-  console.log("[api/key] referer:", JSON.stringify(referer));
-
-  if (!isAllowedReferer(referer)) {
-    return reject("invalid_referer");
-  }
-
-  // 4) Одноразовість
+  // 3) Одноразовість
   if (isUsed(token)) return reject("token_used");
   markUsed(token, TOKEN_TTL_MS);
 
