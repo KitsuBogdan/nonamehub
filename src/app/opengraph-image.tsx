@@ -1,17 +1,24 @@
 // src/app/opengraph-image.tsx
 import { ImageResponse } from "next/og";
-import { readFile } from "fs/promises";
-import { join } from "path";
 
-export const runtime = "nodejs";
 export const alt = "NoNameHub — Roblox resource hub";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OG() {
-  // Вбудовуємо реальний logo.png як base64
-  const logo = await readFile(join(process.cwd(), "public/logo.png"));
-  const logoUrl = `data:image/png;base64,${logo.toString("base64")}`;
+  // Завантажуємо лого через HTTP із власного сайту
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nonamehub.fyi";
+  let logoUrl = `${siteUrl}/logo.png`;
+  try {
+    const res = await fetch(`${siteUrl}/logo.png`, { cache: "force-cache" });
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      const b64 = Buffer.from(buf).toString("base64");
+      logoUrl = `data:image/png;base64,${b64}`;
+    }
+  } catch {
+    /* якщо не вдалось — використаємо прямий URL */
+  }
 
   return new ImageResponse(
     (
@@ -30,13 +37,7 @@ export default async function OG() {
           padding: 60,
         }}
       >
-        <img
-          src={logoUrl}
-          width={90}
-          height={90}
-          alt=""
-          style={{ marginBottom: 36 }}
-        />
+        <img src={logoUrl} width={90} height={90} alt="" style={{ marginBottom: 36 }} />
 
         <div
           style={{
