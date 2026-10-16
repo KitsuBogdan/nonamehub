@@ -35,10 +35,7 @@ export async function GET(
   console.log("[api/key] referer:", JSON.stringify(referer));
 
   if (!isAllowedReferer(referer)) {
-    return Response.json(
-      { error: "invalid_referer", code: "invalid_referer", debug_referer: referer },
-      { status: 403 }
-    );
+    return reject("invalid_referer");
   }
 
   // 4) Одноразовість
