@@ -35,11 +35,10 @@ export default function ResourceView({
   const handleGetKey = () => {
     if (!token) return;
     try {
-      sessionStorage.setItem(
+      localStorage.setItem(
         "pendingKey",
-        JSON.stringify({ slug: resource.slug, token }),
+        JSON.stringify({ slug: resource.slug, token, ts: Date.now() }),
       );
-      alert("[debug] saved pendingKey: " + resource.slug);
     } catch {
       /* ignore */
     }

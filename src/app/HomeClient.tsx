@@ -57,21 +57,25 @@ export default function HomeClient() {
     const hash = params.get("hash");
     if (!hash) return;
 
-    let pending: { slug: string; token: string } | null = null;
+    let pending: { slug: string; token: string; ts: number } | null = null;
     try {
-      const raw = sessionStorage.getItem("pendingKey");
+      const raw = localStorage.getItem("pendingKey");
       if (raw) pending = JSON.parse(raw);
     } catch {
       /* ignore */
     }
 
+    // TTL 5 хв
+    if (pending && Date.now() - pending.ts > 5 * 60 * 1000) {
+      pending = null;
+    }
+
     if (!pending?.slug || !pending?.token) {
-      alert("[debug] hash=" + hash.slice(0, 12) + "… pending=" + JSON.stringify(pending));
       return;
     }
 
     try {
-      sessionStorage.removeItem("pendingKey");
+      localStorage.removeItem("pendingKey");
     } catch {
       /* ignore */
     }
