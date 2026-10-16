@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { resources, type Resource } from "@/data/resources";
 
@@ -47,8 +48,42 @@ function ResourceArtwork({ resource }: { resource: Resource }) {
 
 export default function HomeClient() {
   const { t } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("all");
+
+  // Обробка редіректу з Linkvertise: /?hash=XXX
+  useEffect(() => {
+    const hash = searchParams.get("hash");
+    if (!hash) return;
+
+    let pending: { slug: string; token: string } | null = null;
+    try {
+      const raw = sessionStorage.getItem("pendingKey");
+      if (raw) pending = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+
+    if (!pending?.slug || !pending?.token) {
+      // Хтось прийшов з ?hash= але без pendingKey — це або прямий захід,
+      // або sessionStorage очищено. Просто показуємо головну.
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem("pendingKey");
+    } catch {
+      /* ignore */
+    }
+
+    const target =
+      `/api/key/${pending.slug}` +
+      `?t=${encodeURIComponent(pending.token)}` +
+      `&hash=${encodeURIComponent(hash)}`;
+    router.replace(target);
+  }, [router, searchParams]);
 
   const categoryTabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: t("catalog.all") },

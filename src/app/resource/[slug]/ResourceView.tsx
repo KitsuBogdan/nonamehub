@@ -31,9 +31,18 @@ export default function ResourceView({
   const keyUrl = token
     ? `${siteUrl}/api/key/${resource.slug}?t=${token}`
     : "";
-  const lvHref = keyUrl
-    ? `https://link-to.net/1343514/1/dynamic?r=${encodeURIComponent(keyUrl)}`
-    : "#";
+  const lvHref = "https://link-center.net/1343514/Hlzlwx0Sl3Eb";
+  const handleGetKey = () => {
+    if (!token) return;
+    try {
+      sessionStorage.setItem(
+        "pendingKey",
+        JSON.stringify({ slug: resource.slug, token }),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
   const [copied, setCopied] = useState(false);
 
   // Прибираємо ?key= / ?err= з URL після першого рендера
@@ -172,6 +181,7 @@ async function copyKey() {
                   {token ? (
                     <a
                       href={lvHref}
+                      onClick={handleGetKey}
                       rel="noopener noreferrer"
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-violet-600 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 hover:shadow-violet-500/40 sm:w-auto"
                     >
