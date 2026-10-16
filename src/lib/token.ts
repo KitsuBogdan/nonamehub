@@ -69,24 +69,30 @@ export function isLinkvertiseReferer(referer: string): boolean {
  * ТИМЧАСОВО: для тестування дозволяємо свій власний домен і порожній Referer.
  * Перед продакшеном вимкнути (поставити false).
  */
-export const ALLOW_SELF_REFERER_FOR_TESTING = false;
+export const ALLOW_SELF_REFERER_FOR_TESTING = true;
 
 export function isAllowedReferer(referer: string): boolean {
   if (ALLOW_SELF_REFERER_FOR_TESTING) {
-    if (!referer) return true; // прямий доступ
+    if (!referer) return true;
+
     try {
       const url = new URL(referer);
       const host = url.hostname.toLowerCase();
+
       if (
-        host === "nonamehub.nonamescr.workers.dev" ||
+        host === "nonamehub.fyi" ||
+        host.endsWith(".nonamehub.fyi") ||
+        host === "nonamehub.pages.dev" ||
+        host.endsWith(".nonamehub.pages.dev") ||
         host === "localhost" ||
         host === "127.0.0.1"
       ) {
         return true;
       }
     } catch {
-      return true;
+      return false;
     }
   }
+
   return isLinkvertiseReferer(referer);
 }

@@ -30,17 +30,17 @@ export async function GET(
   // 2) Підпис + TTL
   if (!verifyToken(slug, token)) return reject("invalid_token");
 
-  // 3) Одноразовість
-  if (isUsed(token)) return reject("token_used");
-  markUsed(token, TOKEN_TTL_MS);
-
-  // 4) Referer
+  // 3) Referer — перевіряємо до позначення токена використаним
   const referer = request.headers.get("referer") ?? "";
   console.log("[api/key] referer:", JSON.stringify(referer));
 
   if (!isAllowedReferer(referer)) {
     return reject("invalid_referer");
   }
+
+  // 4) Одноразовість
+  if (isUsed(token)) return reject("token_used");
+  markUsed(token, TOKEN_TTL_MS);
 
   // 5) Генеруємо ключ
   try {
