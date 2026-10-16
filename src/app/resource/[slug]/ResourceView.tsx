@@ -39,6 +39,7 @@ export default function ResourceView({
         "pendingKey",
         JSON.stringify({ slug: resource.slug, token }),
       );
+      alert("[debug] saved pendingKey: " + resource.slug);
     } catch {
       /* ignore */
     }
