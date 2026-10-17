@@ -27,3 +27,8 @@ bucket_name = "nonamehub-covers"
 
 [vars]
 NEXT_PUBLIC_SITE_URL = "https://nonamehub.fyi"
+
+# Custom domain
+routes = [
+  { pattern = "nonamehub.fyi", custom_domain = true }
+]

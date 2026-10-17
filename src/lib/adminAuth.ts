@@ -1,12 +1,27 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const COOKIE = "nh_admin";
-const SECRET = process.env.ADMIN_SECRET ?? "change-me-please";
-const MAX_AGE = 60 * 60 * 24 * 7; // 7 днів
+const MAX_AGE = 60 * 60 * 24 * 7;
+
+type CloudflareEnv = {
+  ADMIN_SECRET?: string;
+};
+
+function getSecret(): string {
+  try {
+    const ctx = getCloudflareContext();
+    const env = (ctx.env as CloudflareEnv | undefined) ?? {};
+    if (env.ADMIN_SECRET) return env.ADMIN_SECRET;
+  } catch {
+    /* not on Cloudflare */
+  }
+  return process.env.ADMIN_SECRET ?? "change-me-please";
+}
 
 function sign(value: string): string {
-  return crypto.createHmac("sha256", SECRET).update(value).digest("hex");
+  return crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
 }
 
 function makeToken(): string {

@@ -46,3 +46,7 @@ data/resources.json
 
 # Uploaded covers (dev)
 public/covers/
+# Wrangler local state
+.wrangler/
+.open-next/
+loader/loader/

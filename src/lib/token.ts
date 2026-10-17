@@ -1,5 +1,6 @@
-const SECRET = process.env.NONAME_TOKEN_SECRET ?? "change-me-in-production";
-const TTL_MS = 15 * 60 * 1000; // 15 хв на весь флоу
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
+const TTL_MS = 15 * 60 * 1000;
 
 export type TokenPayload = {
   slug: string;
@@ -7,11 +8,26 @@ export type TokenPayload = {
   exp: number;
 };
 
+type CloudflareEnv = {
+  NONAME_TOKEN_SECRET?: string;
+};
+
+function getSecret(): string {
+  try {
+    const ctx = getCloudflareContext();
+    const env = (ctx.env as CloudflareEnv | undefined) ?? {};
+    if (env.NONAME_TOKEN_SECRET) return env.NONAME_TOKEN_SECRET;
+  } catch {
+    /* not on Cloudflare */
+  }
+  return process.env.NONAME_TOKEN_SECRET ?? "change-me-in-production";
+}
+
 async function getKey(): Promise<CryptoKey> {
   const enc = new TextEncoder();
   return crypto.subtle.importKey(
     "raw",
-    enc.encode(SECRET),
+    enc.encode(getSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],

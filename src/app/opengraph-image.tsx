@@ -1,24 +1,23 @@
-// src/app/opengraph-image.tsx
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import path from "path";
 
 export const alt = "NoNameHub — Roblox resource hub";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OG() {
-  // Завантажуємо лого через HTTP із власного сайту
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nonamehub.fyi";
-  let logoUrl = `${siteUrl}/logo.png`;
+async function getLogoDataUri(): Promise<string | null> {
   try {
-    const res = await fetch(`${siteUrl}/logo.png`, { cache: "force-cache" });
-    if (res.ok) {
-      const buf = await res.arrayBuffer();
-      const b64 = Buffer.from(buf).toString("base64");
-      logoUrl = `data:image/png;base64,${b64}`;
-    }
+    const filePath = path.join(process.cwd(), "public", "logo.png");
+    const buf = await readFile(filePath);
+    return `data:image/png;base64,${buf.toString("base64")}`;
   } catch {
-    /* якщо не вдалось — використаємо прямий URL */
+    return null;
   }
+}
+
+export default async function OG() {
+  const logoUrl = await getLogoDataUri();
 
   return new ImageResponse(
     (
@@ -37,15 +36,16 @@ export default async function OG() {
           padding: 60,
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element --
-            ImageResponse рендериться через Satori, next/image тут не працює */}
-        <img
-          src={logoUrl}
-          width={90}
-          height={90}
-          alt=""
-          style={{ marginBottom: 36 }}
-        />
+        {logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            width={90}
+            height={90}
+            alt=""
+            style={{ marginBottom: 36 }}
+          />
+        )}
 
         <div
           style={{
