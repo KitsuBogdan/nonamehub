@@ -1,3 +1,0 @@
-module.exports=[24736,a=>{"use strict";var b=a.i(87924),c=a.i(16644);let d={"nn-key":"/key-cover.png","nn-key-premium":"/key-cover-premium.png"};a.s(["default",0,function({resource:a}){let e=a.cover??d[a.slug]??"/default-cover.png";return(0,b.jsxs)("div",{className:"group relative h-36 w-full overflow-hidden bg-white/5",children:[(0,b.jsx)(c.default,{src:e,alt:a.title,fill:!0,sizes:"(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",className:"object-cover transition duration-500 group-hover:scale-105"}),(0,b.jsx)("div",{"aria-hidden":"true",className:"pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"})]})}])}];
-
-//# sourceMappingURL=src_components_ResourceArtwork_tsx_0b7m7lg3h7eyp._.js.map

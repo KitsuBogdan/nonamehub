@@ -46,17 +46,6 @@ data/resources.json
 
 # Uploaded covers (dev)
 public/covers/
-# Wrangler local state
-.wrangler/
-.open-next/
-loader/loader/
-
-# Build artifacts
-.open-next/
-.wrangler/
-
-# Nested folder (accidental)
-loader/loader/
 
 # Build artifacts
 .open-next/
