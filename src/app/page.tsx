@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
+import { getAllResources } from "@/lib/resourcesStore";
 import HomeClient from "./HomeClient";
 
-export const metadata: Metadata = {
-  title: "NoNameHub — Roblox resource hub",
-  description:
-    "Discover scripts, models, and UI kits made for your next Roblox project.",
-};
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <HomeClient />;
+export default async function Page() {
+  const resources = await getAllResources();
+  return <HomeClient resources={resources} />;
 }

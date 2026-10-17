@@ -1,0 +1,29 @@
+﻿name = "nonamehub"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# OpenNext output
+main = ".open-next/worker.js"
+assets = { directory = ".open-next/assets", binding = "ASSETS" }
+
+# KV для resourcesStore
+[[kv_namespaces]]
+binding = "RESOURCES_KV"
+id = "e0b3a45c59044a36bcf2d33cf91b3ba9"
+
+# R2 для обкладинок
+[[r2_buckets]]
+binding = "RESOURCES_R2"
+bucket_name = "nonamehub-covers"
+
+# Секрети задаються через `wrangler secret put`, не тут:
+# NONAME_TOKEN_SECRET
+# LINKVERTISE_ANTI_BYPASS_TOKEN
+# NONAME_WORKER_URL
+# NONAME_ADMIN_TOKEN
+# ADMIN_PASSWORD
+# ADMIN_SECRET
+# NEXT_PUBLIC_SITE_URL
+
+[vars]
+NEXT_PUBLIC_SITE_URL = "https://nonamehub.fyi"

@@ -1,13 +1,10 @@
-// src/app/resource/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getResource, getSimilar, resources } from "@/data/resources";
+import { getResourceBySlug, getAllResources } from "@/lib/resourcesStore";
 import ResourceView from "./ResourceView";
 
-export function generateStaticParams() {
-  return resources.map((r) => ({ slug: r.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -15,15 +12,15 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const resource = getResource(slug);
-  if (!resource) return { title: "Resource not found" };
+  const resource = await getResourceBySlug(slug);
+  if (!resource || resource.disabled) return { title: "Resource not found" };
   return {
     title: resource.title,
     description: resource.description,
     openGraph: {
       title: `${resource.title} — NoNameHub`,
       description: resource.description,
-      type: "article",
+      images: resource.cover ? [{ url: resource.cover }] : undefined,
     },
   };
 }
@@ -37,10 +34,13 @@ export default async function ResourcePage({
 }) {
   const { slug } = await params;
   const sp = await searchParams;
-  const resource = getResource(slug);
-  if (!resource) notFound();
+  const resource = await getResourceBySlug(slug);
+  if (!resource || resource.disabled) notFound();
 
-  const similar = getSimilar(slug, 3);
+  const all = await getAllResources();
+  const similar = all
+    .filter((r) => r.slug !== slug && r.category === resource.category)
+    .slice(0, 3);
 
   return (
     <>

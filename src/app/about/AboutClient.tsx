@@ -8,7 +8,7 @@ export default function AboutClient() {
   const { t } = useLanguage();
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-10 sm:px-8">
+    <main className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
       <Link
         href="/"
         className="text-sm text-zinc-400 transition hover:text-white"

@@ -7,7 +7,7 @@ export default function NotFound() {
   const { t } = useLanguage();
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-5xl flex-col items-center justify-center px-5 py-16 sm:px-8">
+    <main className="mx-auto flex max-w-5xl flex-col items-center justify-center px-5 py-20 sm:px-8">
       <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white/3 p-8 text-center sm:p-14">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-400/10 text-3xl text-violet-300">
           ✳

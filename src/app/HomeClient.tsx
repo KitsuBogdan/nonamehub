@@ -1,186 +1,216 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
-import { resources } from "@/data/resources";
+import type { Resource } from "@/data/resources";
 import ResourceArtwork from "@/components/ResourceArtwork";
+import HashOverlay, { type OverlayState } from "@/components/HashOverlay";
+import { SITE } from "@/data/site";
 
-type CategoryKey = "all" | "Scripts" | "Models" | "UI";
+type CategoryKey = "all" | "Scripts" | "Models" | "UI" | "Key";
 
-type PendingKey = {
-  slug: string;
-  token: string;
-  step: number;
-  ts: number;
-};
-
-const PENDING_TTL_MS = 10 * 60 * 1000;
+type PendingKey = { slug: string; token: string; step: number; ts: number };
+const PENDING_TTL_MS = 15 * 60 * 1000;
 
 function readPending(): PendingKey | null {
   try {
     const raw = localStorage.getItem("pendingKey");
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as PendingKey;
-    if (!parsed?.slug || !parsed?.token) return null;
-    if (Date.now() - parsed.ts > PENDING_TTL_MS) return null;
-    return parsed;
+    const p = JSON.parse(raw) as PendingKey;
+    if (!p?.slug || !p?.token) return null;
+    if (Date.now() - p.ts > PENDING_TTL_MS) return null;
+    return p;
   } catch {
     return null;
   }
 }
 
-function writePending(p: PendingKey): void {
+function writePending(p: PendingKey) {
   try {
     localStorage.setItem("pendingKey", JSON.stringify(p));
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-function clearPending(): void {
+function clearPending() {
   try {
     localStorage.removeItem("pendingKey");
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-export default function HomeClient() {
+function clearHashFromUrl() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete("hash");
+  window.history.replaceState({}, "", url.toString());
+}
+
+export default function HomeClient({ resources }: { resources: Resource[] }) {
   const { t } = useLanguage();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("all");
+  const [overlay, setOverlay] = useState<OverlayState | null>(null);
+  const [lastHash, setLastHash] = useState<string | null>(null);
+  const handledRef = useRef(false);
 
-  // ── Обробка повернення з Linkvertise: /?hash=XXX
+  async function processHash(hash: string) {
+    // Yield before any setState so this function is never considered
+    // as making a synchronous setState from an effect.
+    await Promise.resolve();
+
+    const pending = readPending();
+    if (!pending) {
+      clearHashFromUrl();
+      handledRef.current = false;
+      setOverlay(null);
+      return;
+    }
+
+    setOverlay({ kind: "checking" });
+    setLastHash(hash);
+
+    try {
+      const res = await fetch(`/api/key/${pending.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: pending.token, hash }),
+      });
+      const data = await res.json();
+
+      if (data.key) {
+        clearPending();
+        clearHashFromUrl();
+        setOverlay(null);
+        handledRef.current = false;
+        router.push(
+          `/resource/${pending.slug}?key=${encodeURIComponent(data.key)}`,
+        );
+        return;
+      }
+
+      if (data.nextUrl && data.progress) {
+        writePending({
+          slug: pending.slug,
+          token: data.nextToken,
+          step: data.nextStep,
+          ts: Date.now(),
+        });
+        setOverlay({
+          kind: "next",
+          completed: data.progress.next - 1,
+          next: data.progress.next,
+          total: data.progress.total,
+          nextUrl: data.nextUrl,
+        });
+        return;
+      }
+
+      setOverlay({
+        kind: "error",
+        message: data.error ?? "Unknown error",
+      });
+    } catch {
+      setOverlay({ kind: "error", message: "Network error" });
+    }
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (handledRef.current) return;
 
     const params = new URLSearchParams(window.location.search);
     const hash = params.get("hash");
     if (!hash) return;
 
-    const pending = readPending();
-    if (!pending) return;
+    handledRef.current = true;
+    
+    // Defer the call to avoid triggering react-hooks/set-state-in-effect
+    const timeoutId = setTimeout(() => {
+      processHash(hash);
+    }, 0);
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await fetch(`/api/key/${pending.slug}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: pending.token, hash }),
-        });
-
-        const data = (await res.json()) as {
-          ok?: boolean;
-          key?: string;
-          nextStep?: number;
-          nextToken?: string;
-          nextUrl?: string;
-          error?: string;
-        };
-
-        if (cancelled) return;
-
-        const cleanUrl = new URL(window.location.href);
-        cleanUrl.searchParams.delete("hash");
-        window.history.replaceState({}, "", cleanUrl.toString());
-
-        if (data.key) {
-          clearPending();
-          router.push(
-            `/resource/${pending.slug}?key=${encodeURIComponent(data.key)}`,
-          );
-          return;
-        }
-
-        if (
-          data.nextUrl &&
-          typeof data.nextStep === "number" &&
-          data.nextToken
-        ) {
-          writePending({
-            slug: pending.slug,
-            token: data.nextToken,
-            step: data.nextStep,
-            ts: Date.now(),
-          });
-          window.location.assign(data.nextUrl);
-          return;
-        }
-
-        clearPending();
-        router.push(
-          `/resource/${pending.slug}?err=${encodeURIComponent(
-            data.error ?? "unknown",
-          )}`,
-        );
-      } catch (err) {
-        if (cancelled) return;
-        console.error("key-flow error:", err);
-        clearPending();
-        router.push(`/resource/${pending.slug}?err=network`);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const categoryTabs: { key: CategoryKey; label: string }[] = [
     { key: "all", label: t("catalog.all") },
     { key: "Scripts", label: t("catalog.scripts") },
     { key: "Models", label: t("catalog.models") },
     { key: "UI", label: t("catalog.ui") },
+    { key: "Key", label: "Keys" },
   ];
 
   const filteredResources = useMemo(() => {
     const q = query.trim().toLowerCase();
     return resources.filter((r) => {
+      if (r.disabled) return false;
       const matchesCategory =
         activeCategory === "all" || r.category === activeCategory;
       const matchesQuery =
         !q ||
-        `${r.title} ${r.description} ${r.category}`
-          .toLowerCase()
-          .includes(q);
+        `${r.title} ${r.description} ${r.category}`.toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
-  }, [query, activeCategory]);
+  }, [query, activeCategory, resources]);
 
   return (
     <main>
-      {/* ── HERO (solo, центрований) ─────────────────────────── */}
+      {overlay && (
+        <HashOverlay
+          state={overlay}
+          onContinue={(url) => {
+            window.location.assign(url);
+          }}
+          onRetry={() => {
+            if (lastHash) processHash(lastHash);
+          }}
+          onClose={() => {
+            setOverlay(null);
+            clearHashFromUrl();
+            clearPending();
+            handledRef.current = false;
+          }}
+        />
+      )}
+
+      {/* HERO */}
       <section className="hero hero--solo">
         <div className="hero-grid" aria-hidden="true" />
-
         <div className="hero-content hero-content--centered">
           <div className="eyebrow">
             <span className="status-dot" />
             {t("hero.eyebrow")}
           </div>
-
           <h1 className="hero-title">
             {t("hero.title1")}
             <br />
             <span>{t("hero.title2")}</span>
           </h1>
-
           <p className="hero-copy">{t("hero.copy")}</p>
-
           <div className="hero-actions">
             <a className="primary-button" href="#catalog">
               {t("hero.cta")} <span>→</span>
             </a>
-            <a className="ghost-button" href="#how-it-works">
-              {t("nav.how")}
+            <a
+              className="ghost-button"
+              href={SITE.discord}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              💬 Join Discord
+            </a>
+            <a
+              className="ghost-button"
+              href={SITE.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ▶ YouTube
             </a>
           </div>
-
           <div className="hero-note">
             <span className="note-icon">✳</span>
             {t("hero.note")}
@@ -188,6 +218,7 @@ export default function HomeClient() {
         </div>
       </section>
 
+      {/* CATALOG */}
       <section className="catalog-section" id="catalog">
         <div className="section-heading">
           <div>
@@ -277,6 +308,7 @@ export default function HomeClient() {
         )}
       </section>
 
+      {/* HOW */}
       <section className="how-section" id="how-it-works">
         <div className="how-heading">
           <div className="section-kicker">{t("how.kicker")}</div>

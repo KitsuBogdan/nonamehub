@@ -1,6 +1,5 @@
-// src/lib/token.ts
-const SECRET = process.env.TOKEN_SECRET ?? "change-me-in-production";
-const TTL_MS = 10 * 60 * 1000; // 10 хв на весь флоу (усі 3 кроки)
+const SECRET = process.env.NONAME_TOKEN_SECRET ?? "change-me-in-production";
+const TTL_MS = 15 * 60 * 1000; // 15 хв на весь флоу
 
 export type TokenPayload = {
   slug: string;
@@ -15,7 +14,7 @@ async function getKey(): Promise<CryptoKey> {
     enc.encode(SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign", "verify"],
+    ["sign"],
   );
 }
 
@@ -36,23 +35,15 @@ function unb64url(str: string): Uint8Array {
 }
 
 export async function createToken(slug: string, step = 0): Promise<string> {
-  const payload: TokenPayload = {
-    slug,
-    step,
-    exp: Date.now() + TTL_MS,
-  };
-  const payloadStr = JSON.stringify(payload);
-  const payloadB64 = b64url(new TextEncoder().encode(payloadStr));
-
+  const payload: TokenPayload = { slug, step, exp: Date.now() + TTL_MS };
+  const payloadB64 = b64url(new TextEncoder().encode(JSON.stringify(payload)));
   const key = await getKey();
-  const sigBuf = await crypto.subtle.sign(
+  const sig = await crypto.subtle.sign(
     "HMAC",
     key,
     new TextEncoder().encode(payloadB64),
   );
-  const sigB64 = b64url(sigBuf);
-
-  return `${payloadB64}.${sigB64}`;
+  return `${payloadB64}.${b64url(sig)}`;
 }
 
 export async function verifyToken(
@@ -60,19 +51,14 @@ export async function verifyToken(
   token: string,
 ): Promise<TokenPayload | null> {
   if (!token || typeof token !== "string") return null;
-
   const [payloadB64, sigB64] = token.split(".");
   if (!payloadB64 || !sigB64) return null;
 
   const key = await getKey();
-  const sigBuf = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(payloadB64),
+  const expectedSig = b64url(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64)),
   );
-  const expectedSig = b64url(sigBuf);
 
-  // timing-safe порівняння
   if (expectedSig.length !== sigB64.length) return null;
   let diff = 0;
   for (let i = 0; i < expectedSig.length; i++) {
@@ -81,13 +67,12 @@ export async function verifyToken(
   if (diff !== 0) return null;
 
   try {
-    const json = new TextDecoder().decode(unb64url(payloadB64));
-    const payload = JSON.parse(json) as TokenPayload;
-
+    const payload = JSON.parse(
+      new TextDecoder().decode(unb64url(payloadB64)),
+    ) as TokenPayload;
     if (payload.slug !== slug) return null;
     if (typeof payload.step !== "number") return null;
     if (payload.exp < Date.now()) return null;
-
     return payload;
   } catch {
     return null;

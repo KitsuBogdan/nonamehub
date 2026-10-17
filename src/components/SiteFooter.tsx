@@ -2,40 +2,116 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
-import Brand from "./Brand";
+import { SITE } from "@/data/site";
 
 export default function SiteFooter() {
   const { t } = useLanguage();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="site-footer">
-      <div className="footer-inner">
-        <div className="footer-brand-col">
-          <div className="footer-brand">
-            <Brand size={28} />
+    <footer className="mt-20 border-t border-white/10 bg-black/40">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-4">
+        <div>
+          <div className="font-[Space_Grotesk] text-xl font-semibold">
+            NoNameHub
           </div>
-          <p className="footer-tagline">{t("footer.tagline")}</p>
+          <p className="mt-2 text-sm text-zinc-500">{t("footer.tagline")}</p>
+          <div className="mt-4 flex gap-2">
+            <a
+              href={SITE.discord}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 transition hover:border-violet-400/40 hover:bg-violet-400/10"
+              aria-label="Discord"
+            >
+              💬
+            </a>
+            <a
+              href={SITE.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 transition hover:border-violet-400/40 hover:bg-violet-400/10"
+              aria-label="YouTube"
+            >
+              ▶
+            </a>
+          </div>
         </div>
 
-        <nav className="footer-cols" aria-label="Footer">
-          <div className="footer-col">
-            <h4>{t("footer.product")}</h4>
-            <Link href="/resources">{t("footer.allResources")}</Link>
-          </div>
-          <div className="footer-col">
-            <h4>{t("footer.company")}</h4>
-            <Link href="/about">{t("footer.about")}</Link>
-          </div>
-          <div className="footer-col">
-            <h4>{t("footer.legal")}</h4>
-            <Link href="/terms">{t("footer.terms")}</Link>
-            <Link href="/privacy">{t("footer.privacy")}</Link>
-          </div>
-        </nav>
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+            {t("footer.product")}
+          </h3>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <Link href="/resources" className="text-zinc-400 hover:text-white">
+                {t("footer.allResources")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/#how-it-works" className="text-zinc-400 hover:text-white">
+                How it works
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+            Community
+          </h3>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <a
+                href={SITE.discord}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white"
+              >
+                Discord
+              </a>
+            </li>
+            <li>
+              <a
+                href={SITE.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white"
+              >
+                YouTube
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+            {t("footer.company")}
+          </h3>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <Link href="/about" className="text-zinc-400 hover:text-white">
+                {t("footer.about")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="text-zinc-400 hover:text-white">
+                {t("footer.terms")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="text-zinc-400 hover:text-white">
+                {t("footer.privacy")}
+              </Link>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div className="footer-bottom">
-        <span>{t("footer.copy", { year: new Date().getFullYear() })}</span>
+      <div className="border-t border-white/10 py-6">
+        <p className="text-center text-xs text-zinc-600">
+          {t("footer.copy").replace("{year}", String(year))}
+        </p>
       </div>
     </footer>
   );

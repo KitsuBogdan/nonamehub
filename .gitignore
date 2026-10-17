@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local resources store (dev)
+data/resources.json
+
+# Uploaded covers (dev)
+public/covers/

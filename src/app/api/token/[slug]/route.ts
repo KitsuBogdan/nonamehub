@@ -1,4 +1,3 @@
-// src/app/api/token/[slug]/route.ts
 import { NextResponse } from "next/server";
 import { getResource } from "@/data/resources";
 import { createToken } from "@/lib/token";
@@ -9,10 +8,9 @@ export async function GET(
 ) {
   const { slug } = await params;
   const resource = getResource(slug);
-  if (!resource) {
+  if (!resource || resource.disabled) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
-
   const token = await createToken(slug, 0);
   return NextResponse.json(
     { token },

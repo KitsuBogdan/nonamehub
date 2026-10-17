@@ -1,4 +1,3 @@
-// src/lib/usedTokens.ts
 type Entry = { expiresAt: number };
 
 const store = new Map<string, Entry>();
@@ -13,10 +12,9 @@ export function isUsed(token: string): boolean {
   return true;
 }
 
-export function markUsed(token: string, ttlMs = 10 * 60 * 1000): void {
+export function markUsed(token: string, ttlMs = 15 * 60 * 1000): void {
   store.set(token, { expiresAt: Date.now() + ttlMs });
-  // Періодичне прибирання старих ключів
-  if (store.size > 1000) {
+  if (store.size > 2000) {
     const now = Date.now();
     for (const [k, v] of store) {
       if (v.expiresAt < now) store.delete(k);
