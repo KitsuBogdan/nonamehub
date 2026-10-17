@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { TOKEN_SECRET } from "./secrets";
 
 const TTL_MS = 15 * 60 * 1000;
 
@@ -8,26 +8,16 @@ export type TokenPayload = {
   exp: number;
 };
 
-type CloudflareEnv = {
-  NONAME_TOKEN_SECRET?: string;
-};
-
-function getSecret(): string {
-  try {
-    const ctx = getCloudflareContext();
-    const env = (ctx.env as CloudflareEnv | undefined) ?? {};
-    if (env.NONAME_TOKEN_SECRET) return env.NONAME_TOKEN_SECRET;
-  } catch {
-    /* not on Cloudflare */
-  }
-  return process.env.NONAME_TOKEN_SECRET ?? "change-me-in-production";
+function secretFingerprint(): string {
+  const s = TOKEN_SECRET ?? "";
+  return `${s.slice(0, 6)}...${s.slice(-4)} (len=${s.length})`;
 }
 
 async function getKey(): Promise<CryptoKey> {
   const enc = new TextEncoder();
   return crypto.subtle.importKey(
     "raw",
-    enc.encode(getSecret()),
+    enc.encode(TOKEN_SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -59,38 +49,94 @@ export async function createToken(slug: string, step = 0): Promise<string> {
     key,
     new TextEncoder().encode(payloadB64),
   );
-  return `${payloadB64}.${b64url(sig)}`;
+  const sigB64 = b64url(sig);
+
+  console.log("[createToken]", {
+    secret: secretFingerprint(),
+    slug,
+    step,
+    payloadB64_len: payloadB64.length,
+    sig_prefix: sigB64.slice(0, 20),
+    sig_len: sigB64.length,
+  });
+
+  return `${payloadB64}.${sigB64}`;
 }
 
 export async function verifyToken(
   slug: string,
   token: string,
 ): Promise<TokenPayload | null> {
-  if (!token || typeof token !== "string") return null;
+  console.log("[verifyToken] entry", {
+    secret: secretFingerprint(),
+    slug,
+    token_type: typeof token,
+    token_len: typeof token === "string" ? token.length : null,
+    token_prefix: typeof token === "string" ? token.slice(0, 40) : null,
+  });
+
+  if (!token || typeof token !== "string") {
+    console.log("[verifyToken] REJECT: no token");
+    return null;
+  }
+
   const [payloadB64, sigB64] = token.split(".");
-  if (!payloadB64 || !sigB64) return null;
+  if (!payloadB64 || !sigB64) {
+    console.log("[verifyToken] REJECT: bad split", { payloadB64: !!payloadB64, sigB64: !!sigB64 });
+    return null;
+  }
 
   const key = await getKey();
   const expectedSig = b64url(
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64)),
   );
 
-  if (expectedSig.length !== sigB64.length) return null;
+  console.log("[verifyToken] sig compare", {
+    expected_prefix: expectedSig.slice(0, 20),
+    got_prefix: sigB64.slice(0, 20),
+    expected_len: expectedSig.length,
+    got_len: sigB64.length,
+    match_prefix: expectedSig.slice(0, 20) === sigB64.slice(0, 20),
+  });
+
+  if (expectedSig.length !== sigB64.length) {
+    console.log("[verifyToken] REJECT: length mismatch");
+    return null;
+  }
+
   let diff = 0;
   for (let i = 0; i < expectedSig.length; i++) {
     diff |= expectedSig.charCodeAt(i) ^ sigB64.charCodeAt(i);
   }
-  if (diff !== 0) return null;
+  if (diff !== 0) {
+    console.log("[verifyToken] REJECT: HMAC mismatch (secret differs or token tampered)");
+    return null;
+  }
 
   try {
     const payload = JSON.parse(
       new TextDecoder().decode(unb64url(payloadB64)),
     ) as TokenPayload;
-    if (payload.slug !== slug) return null;
-    if (typeof payload.step !== "number") return null;
-    if (payload.exp < Date.now()) return null;
+    console.log("[verifyToken] payload decoded", payload);
+
+    if (payload.slug !== slug) {
+      console.log("[verifyToken] REJECT: slug mismatch", { expected: slug, got: payload.slug });
+      return null;
+    }
+    if (typeof payload.step !== "number") {
+      console.log("[verifyToken] REJECT: bad step");
+      return null;
+    }
+    if (payload.exp < Date.now()) {
+      console.log("[verifyToken] REJECT: expired", { exp: payload.exp, now: Date.now() });
+      return null;
+    }
+    console.log("[verifyToken] ACCEPT");
     return payload;
-  } catch {
+  } catch (e) {
+    console.log("[verifyToken] REJECT: parse error", String(e));
     return null;
   }
 }
+
+export async function consumeToken(_token: string): Promise<void> {}

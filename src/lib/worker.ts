@@ -75,7 +75,8 @@ export async function generateKey(options: {
   if (options.keyType)
     url.searchParams.set("type", options.keyType);
 
-  const loader = getLoaderBinding();
+  // ⚠️  LOADER binding disabled — завжди використовуємо NONAME_WORKER_URL (api.nonamehub.fyi)
+  const loader = null as ReturnType<typeof getLoaderBinding>;
   const targetUrl = url.toString();
   let res: Response;
 
@@ -102,7 +103,11 @@ export async function generateKey(options: {
   }
 
   if (res.status === 401)
-    throw new WorkerError("Invalid admin token", 500, "invalid_token");
+    throw new WorkerError(
+      "Loader rejected NONAME_ADMIN_TOKEN (server misconfiguration)",
+      500,
+      "admin_token_invalid",
+    );
   if (res.status === 429)
     throw new WorkerError("Too many requests", 429, "rate_limited");
   if (res.status === 405)

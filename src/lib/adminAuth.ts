@@ -1,27 +1,12 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { ADMIN_SECRET } from "./secrets";
 
 const COOKIE = "nh_admin";
 const MAX_AGE = 60 * 60 * 24 * 7;
 
-type CloudflareEnv = {
-  ADMIN_SECRET?: string;
-};
-
-function getSecret(): string {
-  try {
-    const ctx = getCloudflareContext();
-    const env = (ctx.env as CloudflareEnv | undefined) ?? {};
-    if (env.ADMIN_SECRET) return env.ADMIN_SECRET;
-  } catch {
-    /* not on Cloudflare */
-  }
-  return process.env.ADMIN_SECRET ?? "change-me-please";
-}
-
 function sign(value: string): string {
-  return crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
+  return crypto.createHmac("sha256", ADMIN_SECRET).update(value).digest("hex");
 }
 
 function makeToken(): string {
@@ -46,7 +31,8 @@ function verifyToken(token: string): boolean {
 export async function isAdmin(): Promise<boolean> {
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
-  return !!token && verifyToken(token);
+  if (!token) return false;
+  return verifyToken(token);
 }
 
 export async function setAdminCookie(): Promise<void> {

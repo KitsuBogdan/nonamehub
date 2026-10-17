@@ -2,28 +2,115 @@ import { NextResponse } from "next/server";
 import { getResource } from "@/data/resources";
 import { generateKey, WorkerError } from "@/lib/worker";
 import { createToken, verifyToken } from "@/lib/token";
-import { isUsed, markUsed } from "@/lib/usedTokens";
 
-const TOKEN_TTL_MS = 15 * 60 * 1000;
+type LvVerifyResult =
+  | { ok: true; valid: boolean }
+  | {
+      ok: false;
+      code:
+        | "linkvertise_not_configured"
+        | "linkvertise_unreachable"
+        | "linkvertise_bad_response"
+        | "linkvertise_bad_token";
+      detail: string;
+    };
 
-async function verifyLinkvertiseHash(hash: string): Promise<boolean> {
+// Linkvertise приймає 64-символьний рядок (не обов'язково hex).
+const HASH_LENGTH = 64;
+
+async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
   const token = process.env.LINKVERTISE_ANTI_BYPASS_TOKEN;
   if (!token) {
-    console.error("LINKVERTISE_ANTI_BYPASS_TOKEN not configured");
-    return false;
+    return {
+      ok: false,
+      code: "linkvertise_not_configured",
+      detail: "LINKVERTISE_ANTI_BYPASS_TOKEN not set",
+    };
   }
+
+  // Валідація формату ДО запиту — інакше отримаємо 302/HTML замість JSON
+  if (hash.length !== HASH_LENGTH || /\s/.test(hash)) {
+    return {
+      ok: false,
+      code: "linkvertise_bad_response",
+      detail: `hash must be exactly 64 chars without whitespace (got ${hash.length} chars)`,
+    };
+  }
+
+  const baseUrl =
+    process.env.LINKVERTISE_API_URL ||
+    "https://publisher.linkvertise.com/api/v1/anti_bypassing";
+  const url = `${baseUrl}?token=${encodeURIComponent(token)}&hash=${encodeURIComponent(hash)}`;
+
+  let res: Response;
   try {
-    const url =
-      `https://publisher.linkvertise.com/api/v1/anti_bypassing` +
-      `?token=${encodeURIComponent(token)}` +
-      `&hash=${encodeURIComponent(hash)}`;
-    const res = await fetch(url, { method: "POST" });
-    const text = (await res.text()).trim();
-    console.log("[linkvertise] anti_bypassing:", text);
-    return text.toUpperCase().includes("TRUE");
+    res = await fetch(url, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
   } catch (err) {
-    console.error("Linkvertise verify error:", err);
-    return false;
+    return { ok: false, code: "linkvertise_unreachable", detail: String(err) };
+  }
+
+  const ct = res.headers.get("content-type") ?? "";
+  const text = (await res.text()).trim();
+
+  console.log(
+    "[linkvertise] status:", res.status,
+    "| ct:", ct,
+    "| body:", text.slice(0, 200),
+  );
+
+  // HTML / redirect = щось не так із запитом (найчастіше — невалідний хеш)
+  if (
+    ct.includes("text/html") ||
+    text.startsWith("<!doctype") ||
+    text.startsWith("<html") ||
+    res.status === 302
+  ) {
+    return {
+      ok: false,
+      code: "linkvertise_bad_response",
+      detail: `got HTML/redirect (status ${res.status}); hash format may be invalid`,
+    };
+  }
+
+  // "Invalid token." — офіційна відповідь Linkvertise
+  if (text.toLowerCase().includes("invalid token")) {
+    return { ok: false, code: "linkvertise_bad_token", detail: text };
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      code: "linkvertise_bad_response",
+      detail: `HTTP ${res.status}: ${text.slice(0, 120)}`,
+    };
+  }
+
+  // Основний формат: {"status": true|false}
+  try {
+    const data = JSON.parse(text);
+    if (typeof data?.status === "boolean") {
+      return { ok: true, valid: data.status };
+    }
+    return {
+      ok: false,
+      code: "linkvertise_bad_response",
+      detail: `unexpected JSON shape: ${text.slice(0, 120)}`,
+    };
+  } catch {
+    // Fallback для старих текстових відповідей (на випадок A/B на боці LV)
+    const upper = text.toUpperCase();
+    if (upper === "TRUE")  return { ok: true, valid: true };
+    if (upper === "FALSE") return { ok: true, valid: false };
+    return {
+      ok: false,
+      code: "linkvertise_bad_response",
+      detail: `unrecognized format: ${text.slice(0, 120)}`,
+    };
   }
 }
 
@@ -48,7 +135,7 @@ export async function POST(
   }
 
   const token = String(body.token ?? "").trim();
-  const hash = String(body.hash ?? "").trim();
+  const hash  = String(body.hash  ?? "").trim();
   if (!token || !hash) {
     return NextResponse.json({ error: "missing_params" }, { status: 400 });
   }
@@ -57,29 +144,33 @@ export async function POST(
   if (!payload) {
     return NextResponse.json({ error: "invalid_token" }, { status: 403 });
   }
-  if (isUsed(token)) {
-    return NextResponse.json({ error: "token_used" }, { status: 403 });
-  }
 
-  const ok = await verifyLinkvertiseHash(hash);
-  if (!ok) {
-    return NextResponse.json({ error: "invalid_hash" }, { status: 403 });
+  const lv = await verifyLinkvertiseHash(hash);
+  if (!lv.ok) {
+    console.error("[key] linkvertise failed:", lv.code, "|", lv.detail);
+    const status = lv.code === "linkvertise_bad_token" ? 500 : 502;
+    return NextResponse.json({ error: lv.code, detail: lv.detail }, { status });
   }
-
-  markUsed(token, TOKEN_TTL_MS);
+  if (!lv.valid) {
+    return NextResponse.json(
+      {
+        error: "invalid_hash",
+        hint: "Hash expired (10s TTL), already used, or invalid.",
+      },
+      { status: 403 },
+    );
+  }
 
   const totalSteps = resource.steps > 0 ? resource.steps : 1;
   const currentStep = payload.step;
   const nextStep = currentStep + 1;
 
-  // Проміжний крок → новий токен + посилання на наступний Linkvertise
   if (nextStep < totalSteps) {
     const nextToken = await createToken(slug, nextStep);
     const nextUrl =
       resource.linkvertise?.[nextStep]?.url ??
       resource.linkvertise?.[0]?.url ??
       "";
-
     return NextResponse.json({
       ok: true,
       progress: { next: nextStep + 1, total: totalSteps },
@@ -89,7 +180,6 @@ export async function POST(
     });
   }
 
-  // Останній крок → генеруємо ключ
   try {
     const result = await generateKey({
       name: slug,

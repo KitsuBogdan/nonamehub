@@ -50,4 +50,14 @@ public/covers/
 # Build artifacts
 .open-next/
 .wrangler/
-loader/loader/
+loader/loader/src/lib/secrets.ts
+
+# Local secrets (hardcoded, NOT in repo)
+src/lib/secrets.ts
+
+# Backup files
+*.bak.*
+*.bak
+
+# Wrangler
+.wrangler/

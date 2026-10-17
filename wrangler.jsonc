@@ -1,39 +1,43 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "nonamehub",
-	"main": ".open-next/worker.js",
-	"compatibility_date": "2025-03-01",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"assets": {
-		"directory": ".open-next/assets",
-		"binding": "ASSETS"
-	},
-	"services": [
-		{
-			"binding": "LOADER",
-			"service": "loader"
-		}
-	],
-	"vars": {
-		"NEXT_PUBLIC_SITE_URL": "https://nonamehub.fyi",
-		"NONAME_WORKER_URL": "https://loader.nonamescr.workers.dev"
-	},
-	"observability": {
-		"enabled": true
-	},
-	"kv_namespaces": [
-		{
-			"binding": "RESOURCES_KV",
-			"id": "e0b3a45c59044a36bcf2d33cf91b3ba9"
-		}
-	],
-	"r2_buckets": [
-		{
-			"bucket_name": "nonamehub-covers",
-			"binding": "nonamehub_covers",
-			"remote": true
-		}
-	]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nonamehub",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://nonamehub.fyi",
+    "NONAME_WORKER_URL": "https://api.nonamehub.fyi"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "kv_namespaces": [
+    {
+      "binding": "RESOURCES_KV",
+      "id": "e0b3a45c59044a36bcf2d33cf91b3ba9"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "nonamehub-covers",
+      "binding": "nonamehub_covers",
+      "remote": true
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "nonamehub.fyi",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.nonamehub.fyi",
+      "custom_domain": true
+    }
+  ]
 }
