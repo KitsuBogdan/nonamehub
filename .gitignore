@@ -50,3 +50,10 @@ public/covers/
 .wrangler/
 .open-next/
 loader/loader/
+
+# Build artifacts
+.open-next/
+.wrangler/
+
+# Nested folder (accidental)
+loader/loader/
