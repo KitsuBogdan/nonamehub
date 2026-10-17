@@ -57,3 +57,8 @@ loader/loader/
 
 # Nested folder (accidental)
 loader/loader/
+
+# Build artifacts
+.open-next/
+.wrangler/
+loader/loader/
