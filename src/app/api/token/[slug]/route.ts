@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getResource } from "@/data/resources";
+import { getResourceBySlug } from "@/lib/resourcesStore";
 import { createToken } from "@/lib/token";
 
 export async function GET(
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const resource = getResource(slug);
+  const resource = await getResourceBySlug(slug);
   if (!resource || resource.disabled) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }

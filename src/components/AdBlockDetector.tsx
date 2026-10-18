@@ -1,20 +1,16 @@
-// components/AdBlockDetector.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLanguage } from "@/lib/i18n";
 
 export default function AdBlockDetector({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { t } = useLanguage();
   const [blocked, setBlocked] = useState(false);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Створюємо приманку, яку AdBlock зазвичай ховає
     const bait = document.createElement("div");
     bait.className = "adsbox ad-banner adsbygoogle";
     bait.style.cssText =
@@ -53,13 +49,13 @@ export default function AdBlockDetector({
           </span>
           <div>
             <h3 className="font-[Space_Grotesk] text-base font-semibold text-amber-100">
-              {t("adblock.title")}
+              Ad blocker detected
             </h3>
             <p className="mt-1 text-sm leading-6 text-amber-200/80">
-              {t("adblock.text")}
+              Please disable your ad blocker to unlock this resource. Ads are what keep NoNameHub free.
             </p>
             <p className="mt-2 text-xs leading-5 text-amber-200/60">
-              {t("adblock.how")}
+              Turn off any ad-blocking extensions (uBlock, AdBlock Plus, Brave Shields) and reload the page.
             </p>
           </div>
         </div>

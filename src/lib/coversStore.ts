@@ -34,7 +34,7 @@ export async function saveCover(
   if (!file.type.startsWith("image/")) return { error: "not_image" };
   if (file.size > 3 * 1024 * 1024) return { error: "too_large" };
 
-  const ext = (file.name.split(".").pop() ?? "png").toLowerCase();
+  const ext = (file.name.split(".").pop() ?? "webp").toLowerCase();
   const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const buffer = await file.arrayBuffer();
 

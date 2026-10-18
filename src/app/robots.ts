@@ -1,8 +1,7 @@
-// src/app/robots.ts
 import type { MetadataRoute } from "next";
+import { SITE } from "@/data/site";
 
-const BASE =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://nonamehub.com";
+const BASE = SITE.url.replace(/\/+$/, "");
 
 export default function robots(): MetadataRoute.Robots {
   return {

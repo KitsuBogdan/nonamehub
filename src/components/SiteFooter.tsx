@@ -1,11 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { useLanguage } from "@/lib/i18n";
 import { SITE } from "@/data/site";
 
 export default function SiteFooter() {
-  const { t } = useLanguage();
   const year = new Date().getFullYear();
 
   return (
@@ -15,7 +11,9 @@ export default function SiteFooter() {
           <div className="font-[Space_Grotesk] text-xl font-semibold">
             NoNameHub
           </div>
-          <p className="mt-2 text-sm text-zinc-500">{t("footer.tagline")}</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            A hub for your next idea.
+          </p>
           <div className="mt-4 flex gap-2">
             <a
               href={SITE.discord}
@@ -40,12 +38,12 @@ export default function SiteFooter() {
 
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-            {t("footer.product")}
+            Product
           </h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <Link href="/resources" className="text-zinc-400 hover:text-white">
-                {t("footer.allResources")}
+                All resources
               </Link>
             </li>
             <li>
@@ -86,22 +84,22 @@ export default function SiteFooter() {
 
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-            {t("footer.company")}
+            Company
           </h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <Link href="/about" className="text-zinc-400 hover:text-white">
-                {t("footer.about")}
+                About
               </Link>
             </li>
             <li>
               <Link href="/terms" className="text-zinc-400 hover:text-white">
-                {t("footer.terms")}
+                Terms of Service
               </Link>
             </li>
             <li>
               <Link href="/privacy" className="text-zinc-400 hover:text-white">
-                {t("footer.privacy")}
+                Privacy Policy
               </Link>
             </li>
           </ul>
@@ -110,7 +108,7 @@ export default function SiteFooter() {
 
       <div className="border-t border-white/10 py-6">
         <p className="text-center text-xs text-zinc-600">
-          {t("footer.copy").replace("{year}", String(year))}
+          © {year} NoNameHub
         </p>
       </div>
     </footer>

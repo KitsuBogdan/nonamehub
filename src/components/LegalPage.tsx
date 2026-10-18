@@ -1,51 +1,41 @@
-"use client";
-
 import Link from "next/link";
-import { useLanguage } from "@/lib/i18n";
-
-// Витягуємо точний union усіх ключів перекладів із сигнатури t().
-// Це позбавляє від `any` і одночасно дає type-safety:
-// якщо передати неіснуючий ключ — TS зловить помилку.
-type TranslationKey = Parameters<ReturnType<typeof useLanguage>["t"]>[0];
 
 type Section = {
-  titleKey: TranslationKey;
-  textKey: TranslationKey;
+  title: string;
+  text: string;
 };
 
 export default function LegalPage({
-  kickerKey,
-  titleKey,
-  updatedKey,
-  introKey,
+  kicker,
+  title,
+  updated,
+  intro,
   sections,
 }: {
-  kickerKey: TranslationKey;
-  titleKey: TranslationKey;
-  updatedKey: TranslationKey;
-  introKey: TranslationKey;
+  kicker: string;
+  title: string;
+  updated: string;
+  intro: string;
   sections: Section[];
 }) {
-  const { t } = useLanguage();
-
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-5 py-10 sm:px-8">
       <Link
         href="/"
         className="text-sm text-zinc-400 transition hover:text-white"
       >
-        ← {t("nav.explore")}
+        ← Explore
       </Link>
 
       <header className="mt-8">
         <p className="text-[10px] font-bold tracking-[2px] text-violet-300/80">
-          {t(kickerKey)}
+          {kicker}
         </p>
         <h1 className="mt-3 font-[Space_Grotesk] text-4xl font-semibold tracking-tight sm:text-5xl">
-          {t(titleKey)}
+          {title}
         </h1>
-        <p className="mt-2 text-xs text-zinc-500">{t(updatedKey)}</p>
-        <p className="mt-5 text-sm leading-7 text-zinc-400">{t(introKey)}</p>
+        <p className="mt-2 text-xs text-zinc-500">{updated}</p>
+        <p className="mt-5 text-sm leading-7 text-zinc-400">{intro}</p>
       </header>
 
       <div className="mt-10 space-y-6">
@@ -55,11 +45,9 @@ export default function LegalPage({
             className="rounded-2xl border border-white/10 bg-white/3 p-6"
           >
             <h2 className="font-[Space_Grotesk] text-lg font-semibold">
-              {t(s.titleKey)}
+              {s.title}
             </h2>
-            <p className="mt-3 text-sm leading-7 text-zinc-400">
-              {t(s.textKey)}
-            </p>
+            <p className="mt-3 text-sm leading-7 text-zinc-400">{s.text}</p>
           </section>
         ))}
       </div>

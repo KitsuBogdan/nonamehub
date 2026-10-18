@@ -1,12 +1,22 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { ADMIN_SECRET } from "./secrets";
 
 const COOKIE = "nh_admin";
-const MAX_AGE = 60 * 60 * 24 * 7;
+const MAX_AGE = 60 * 60 * 24; // 24h (було 7d)
+
+function getAdminSecret(): string {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) {
+    throw new Error("ADMIN_SECRET env var is not set");
+  }
+  return secret;
+}
 
 function sign(value: string): string {
-  return crypto.createHmac("sha256", ADMIN_SECRET).update(value).digest("hex");
+  return crypto
+    .createHmac("sha256", getAdminSecret())
+    .update(value)
+    .digest("hex");
 }
 
 function makeToken(): string {
@@ -32,7 +42,12 @@ export async function isAdmin(): Promise<boolean> {
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
   if (!token) return false;
-  return verifyToken(token);
+  try {
+    return verifyToken(token);
+  } catch {
+    // ADMIN_SECRET not configured — treat as unauthenticated.
+    return false;
+  }
 }
 
 export async function setAdminCookie(): Promise<void> {
@@ -49,4 +64,17 @@ export async function setAdminCookie(): Promise<void> {
 export async function clearAdminCookie(): Promise<void> {
   const store = await cookies();
   store.delete(COOKIE);
+}
+
+/**
+ * Constant-time password check.
+ * Compares SHA-256 digests so input length can't leak via timing.
+ */
+export function verifyAdminPassword(
+  input: string,
+  expected: string,
+): boolean {
+  const a = crypto.createHash("sha256").update(input).digest();
+  const b = crypto.createHash("sha256").update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
 }

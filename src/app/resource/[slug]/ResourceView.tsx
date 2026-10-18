@@ -1,29 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useLanguage } from "@/lib/i18n";
+import { useEffect, useState } from "react";
 import type { Resource } from "@/data/resources";
 import { SITE } from "@/data/site";
 import { useToast } from "@/components/Toast";
 
 type PendingKey = { slug: string; token: string; step: number; ts: number };
 
+type KeyInfo = {
+  expiresAt: number;
+  maxUses: number;
+};
+
+type ExistingKey = KeyInfo & {
+  key: string;
+  createdAt: number;
+};
+
+const ERROR_MESSAGES: Record<string, string> = {
+  worker_unreachable: "The key server is currently unavailable. Please try again later.",
+  worker_error: "The key server is currently unavailable. Please try again later.",
+  admin_token_invalid: "Server configuration error. Contact the administrator.",
+  malformed_response: "Server configuration error. Contact the administrator.",
+  server_not_configured: "Server configuration error. Contact the administrator.",
+  rate_limited: "Too many requests. Wait a minute and try again.",
+  method_not_allowed: "Server error. Please try again later.",
+  not_found: "Resource not found.",
+  no_key_required: "This resource doesn't require a key.",
+  invalid_token: "Verification failed. Please start again.",
+  invalid_hash: "Hash expired or already used. Please restart the Linkvertise step.",
+  linkvertise_bad_response: "Verification service unavailable. Try again in a minute.",
+  linkvertise_unreachable: "Verification service unavailable. Try again.",
+  linkvertise_bad_token: "Server configuration error. Contact the administrator.",
+  linkvertise_not_configured: "Server configuration error. Contact the administrator.",
+  missing_token: "Couldn't load the key. Try again.",
+  missing_params: "Couldn't load the key. Try again.",
+  token_used: "This key has already been claimed.",
+  bad_json: "Server error. Please try again.",
+  network: "Network error. Check your connection and try again.",
+  unexpected: "Server error. Please try again.",
+  no_linkvertise_url: "Configuration error. Contact admin.",
+  token_failed: "Key system not ready. Try again.",
+  unknown: "Couldn't load the key. Try again.",
+};
+
+function formatExpiry(ts: number): string {
+  const d = new Date(ts);
+  const dateStr = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const diff = ts - Date.now();
+  if (diff <= 0) return `${dateStr} (expired)`;
+  const hours = Math.floor(diff / 3_600_000);
+  if (hours < 24) return `${dateStr} (${hours}h left)`;
+  const days = Math.floor(diff / 86_400_000);
+  return `${dateStr} (${days}d left)`;
+}
+
 export default function ResourceView({
   resource,
   initialKey,
   initialError,
+  existingKey,
 }: {
   resource: Resource;
   initialKey?: string;
   initialError?: string;
+  existingKey?: ExistingKey | null;
 }) {
-  const { t } = useLanguage();
   const toast = useToast();
 
-  const [key, setKey] = useState<string | null>(initialKey ?? null);
+  const [key, setKey] = useState<string | null>(
+    initialKey ?? existingKey?.key ?? null,
+  );
+  const [info, setInfo] = useState<KeyInfo | null>(
+    existingKey
+      ? { expiresAt: existingKey.expiresAt, maxUses: existingKey.maxUses }
+      : null,
+  );
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    // Fallback expiry info when key came from ?key= URL but cookie is absent
+    // (e.g. copied link, cleared cookie). Deferred via microtask to avoid
+    // synchronous setState inside the effect body.
+    if (!existingKey && initialKey && resource.keyConfig) {
+      const { expiresDays = 2, maxUses = 75 } = resource.keyConfig;
+      Promise.resolve().then(() => {
+        setInfo({
+          expiresAt: Date.now() + expiresDays * 24 * 60 * 60 * 1000,
+          maxUses,
+        });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Strip ?key= from URL after load (cookie holds it now)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("key")) {
+      url.searchParams.delete("key");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
 
   async function copy(value: string, label = "Copied!") {
     try {
@@ -42,8 +127,12 @@ export default function ResourceView({
         method: "POST",
       });
       const data = await res.json();
-      if (data.key) setKey(data.key);
-      else setError(data.error ?? "unknown");
+      if (data.key) {
+        setKey(data.key);
+        setInfo({ expiresAt: data.expiresAt, maxUses: data.maxUses });
+      } else {
+        setError(data.error ?? "unknown");
+      }
     } catch {
       setError("network");
     } finally {
@@ -88,24 +177,6 @@ export default function ResourceView({
     }
   }
 
-  const errorMessages: Record<string, string> = {
-    worker_unreachable: t("resource.err.workerDown"),
-    rate_limited: t("resource.err.rateLimited"),
-    not_found: t("resource.err.notFound"),
-    server_not_configured: t("resource.err.notConfigured"),
-    invalid_token: t("resource.err.notConfigured"),
-    missing_token: t("resource.keyError"),
-    missing_params: t("resource.keyError"),
-    token_used: t("resource.keyError"),
-    invalid_hash: t("resource.keyError"),
-    bad_json: t("resource.keyError"),
-    network: t("resource.err.network"),
-    worker_error: t("resource.err.workerDown"),
-    no_linkvertise_url: "Configuration error. Contact admin.",
-    token_failed: "Key system not ready. Try again.",
-    unknown: t("resource.keyError"),
-  };
-
   const loaderUrl = resource.loaderScriptId
     ? `${SITE.loader}/get_script?script=${resource.loaderScriptId}`
     : null;
@@ -119,7 +190,7 @@ export default function ResourceView({
         href="/resources"
         className="text-sm text-zinc-400 transition hover:text-white"
       >
-        ← {t("resources.back")}
+        ← Back to catalog
       </Link>
 
       <header className="mt-8">
@@ -140,7 +211,6 @@ export default function ResourceView({
         </p>
       </header>
 
-      {/* Loader snippet (для скриптів) */}
       {loaderSnippet && (
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/3 p-6">
           <h2 className="font-[Space_Grotesk] text-lg font-semibold">
@@ -170,7 +240,6 @@ export default function ResourceView({
         </section>
       )}
 
-      {/* Direct download (без ключа) */}
       {!resource.requiresKey && resource.downloadUrl && (
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/3 p-6">
           <h2 className="font-[Space_Grotesk] text-lg font-semibold">
@@ -190,11 +259,10 @@ export default function ResourceView({
         </section>
       )}
 
-      {/* Key section */}
       {resource.requiresKey && (
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/3 p-6">
           <h2 className="font-[Space_Grotesk] text-lg font-semibold">
-            {key ? "Your key" : t("resource.access.title")}
+            {key ? "Your key" : "Getting access"}
           </h2>
 
           {key ? (
@@ -208,12 +276,37 @@ export default function ResourceView({
                   onClick={() => copy(key, "Key copied!")}
                   className="rounded bg-violet-500 px-3 py-2 text-sm font-medium"
                 >
-                  {t("resource.copy")}
+                  Copy
                 </button>
               </div>
+
+              {info && (
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
+                  <span>
+                    Expires:{" "}
+                    <span className="text-zinc-300">
+                      {formatExpiry(info.expiresAt)}
+                    </span>
+                  </span>
+                  <span>
+                    Limit:{" "}
+                    <span className="text-zinc-300">
+                      {info.maxUses} uses
+                    </span>
+                  </span>
+                </div>
+              )}
+
               {resource.keyUsage && (
                 <p className="mt-3 text-xs text-zinc-500">
                   {resource.keyUsage}
+                </p>
+              )}
+
+              {existingKey && (
+                <p className="mt-3 rounded bg-violet-400/5 px-3 py-2 text-xs text-violet-200/70">
+                  You already have an active key for this type. A new one can
+                  be generated after this key expires.
                 </p>
               )}
             </div>
@@ -233,7 +326,7 @@ export default function ResourceView({
                 disabled={busy}
                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-violet-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:opacity-50"
               >
-                {busy ? "Loading…" : t("resource.getKey")}
+                {busy ? "Loading…" : "Get key"}
               </button>
 
               {resource.steps > 1 && (
@@ -249,7 +342,7 @@ export default function ResourceView({
 
               {error && (
                 <p className="mt-3 rounded bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                  {errorMessages[error] ?? t("resource.keyError")}
+                  {ERROR_MESSAGES[error] ?? "Couldn't load the key. Try again."}
                 </p>
               )}
             </>
@@ -257,7 +350,6 @@ export default function ResourceView({
         </section>
       )}
 
-      {/* Support */}
       <section className="mt-8 rounded-2xl border border-violet-400/20 bg-violet-400/6 p-6">
         <h2 className="font-[Space_Grotesk] text-lg font-semibold">
           Need help?

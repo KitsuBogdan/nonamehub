@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "@/lib/i18n";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { ToastProvider } from "@/components/Toast";
 import ScrollTop from "@/components/ScrollTop";
+import { SITE } from "@/data/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,9 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://nonamehub.com",
-  ),
+  metadataBase: new URL(SITE.url),
   title: {
     default: "NoNameHub — Roblox resource hub",
     template: "%s — NoNameHub",
@@ -51,7 +49,7 @@ export const metadata: Metadata = {
     description:
       "Scripts, models, and UI kits for your next Roblox Studio project.",
   },
-  icons: { icon: "/logo.png", apple: "/logo.png" },
+  icons: { icon: "/logo.webp", apple: "/logo.webp" },
   robots: { index: true, follow: true },
 };
 
@@ -62,14 +60,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <body className="flex min-h-screen flex-col">
-        <LanguageProvider>
-          <ToastProvider>
-            <SiteHeader />
-            <div className="flex-1">{children}</div>
-            <SiteFooter />
-            <ScrollTop />
-          </ToastProvider>
-        </LanguageProvider>
+        <ToastProvider>
+          <SiteHeader />
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+          <ScrollTop />
+        </ToastProvider>
       </body>
     </html>
   );

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { useLanguage } from "@/lib/i18n";
 
 export default function GlobalError({
   error,
@@ -11,8 +10,6 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { t } = useLanguage();
-
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -25,20 +22,21 @@ export default function GlobalError({
         </div>
 
         <p className="mt-6 text-[10px] font-bold tracking-[2px] text-red-300/80">
-          {t("error.kicker")}
+          RUNTIME / ERROR
         </p>
 
         <h1 className="mt-3 font-[Space_Grotesk] text-3xl font-semibold tracking-tight sm:text-5xl">
-          {t("error.title")}
+          Something went wrong
         </h1>
 
         <p className="mt-4 text-sm leading-7 text-zinc-400">
-          {t("error.text")}
+          An error occurred while loading this page. Try refreshing or go back
+          to the catalog.
         </p>
 
         {error?.digest && (
           <p className="mt-3 text-xs text-zinc-600">
-            {t("error.code")}{" "}
+            Error code:{" "}
             <span className="text-zinc-400">{error.digest}</span>
           </p>
         )}
@@ -49,13 +47,13 @@ export default function GlobalError({
             onClick={() => reset()}
             className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-red-500 to-red-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition hover:-translate-y-0.5 hover:shadow-red-500/40"
           >
-            {t("error.retry")}
+            ↻ Try again
           </button>
           <Link
             href="/"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/2 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:border-red-400/40 hover:bg-red-400/10"
           >
-            {t("error.home")}
+            ← Back to home
           </Link>
         </div>
       </div>

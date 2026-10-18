@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getResource } from "@/data/resources";
+import { getResourceBySlug } from "@/lib/resourcesStore";
 import { generateKey, WorkerError } from "@/lib/worker";
 import { createToken, verifyToken } from "@/lib/token";
+import { readKeysCookie, isKeyValid, saveKey } from "@/lib/keysCookie";
 
 type LvVerifyResult =
   | { ok: true; valid: boolean }
@@ -15,7 +16,6 @@ type LvVerifyResult =
       detail: string;
     };
 
-// Linkvertise приймає 64-символьний рядок (не обов'язково hex).
 const HASH_LENGTH = 64;
 
 async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
@@ -28,12 +28,11 @@ async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
     };
   }
 
-  // Валідація формату ДО запиту — інакше отримаємо 302/HTML замість JSON
   if (hash.length !== HASH_LENGTH || /\s/.test(hash)) {
     return {
       ok: false,
       code: "linkvertise_bad_response",
-      detail: `hash must be exactly 64 chars without whitespace (got ${hash.length} chars)`,
+      detail: `hash must be exactly ${HASH_LENGTH} chars without whitespace (got ${hash.length})`,
     };
   }
 
@@ -57,13 +56,6 @@ async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
   const ct = res.headers.get("content-type") ?? "";
   const text = (await res.text()).trim();
 
-  console.log(
-    "[linkvertise] status:", res.status,
-    "| ct:", ct,
-    "| body:", text.slice(0, 200),
-  );
-
-  // HTML / redirect = щось не так із запитом (найчастіше — невалідний хеш)
   if (
     ct.includes("text/html") ||
     text.startsWith("<!doctype") ||
@@ -77,7 +69,6 @@ async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
     };
   }
 
-  // "Invalid token." — офіційна відповідь Linkvertise
   if (text.toLowerCase().includes("invalid token")) {
     return { ok: false, code: "linkvertise_bad_token", detail: text };
   }
@@ -90,7 +81,6 @@ async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
     };
   }
 
-  // Основний формат: {"status": true|false}
   try {
     const data = JSON.parse(text);
     if (typeof data?.status === "boolean") {
@@ -102,9 +92,8 @@ async function verifyLinkvertiseHash(hash: string): Promise<LvVerifyResult> {
       detail: `unexpected JSON shape: ${text.slice(0, 120)}`,
     };
   } catch {
-    // Fallback для старих текстових відповідей (на випадок A/B на боці LV)
     const upper = text.toUpperCase();
-    if (upper === "TRUE")  return { ok: true, valid: true };
+    if (upper === "TRUE") return { ok: true, valid: true };
     if (upper === "FALSE") return { ok: true, valid: false };
     return {
       ok: false,
@@ -119,12 +108,27 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const resource = getResource(slug);
+  const resource = await getResourceBySlug(slug);
   if (!resource || resource.disabled) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
   if (!resource.requiresKey) {
     return NextResponse.json({ error: "no_key_required" }, { status: 400 });
+  }
+
+  const keyType = resource.keyType ?? "regular";
+
+  // Return existing valid key immediately — no Linkvertise re-check, no new worker call
+  const existing = await readKeysCookie();
+  if (isKeyValid(existing[keyType])) {
+    const k = existing[keyType]!;
+    return NextResponse.json({
+      ok: true,
+      key: k.key,
+      expiresAt: k.expiresAt,
+      maxUses: k.maxUses,
+      existing: true,
+    });
   }
 
   let body: { token?: string; hash?: string };
@@ -135,7 +139,7 @@ export async function POST(
   }
 
   const token = String(body.token ?? "").trim();
-  const hash  = String(body.hash  ?? "").trim();
+  const hash = String(body.hash ?? "").trim();
   if (!token || !hash) {
     return NextResponse.json({ error: "missing_params" }, { status: 400 });
   }
@@ -162,8 +166,7 @@ export async function POST(
   }
 
   const totalSteps = resource.steps > 0 ? resource.steps : 1;
-  const currentStep = payload.step;
-  const nextStep = currentStep + 1;
+  const nextStep = payload.step + 1;
 
   if (nextStep < totalSteps) {
     const nextToken = await createToken(slug, nextStep);
@@ -180,14 +183,33 @@ export async function POST(
     });
   }
 
+  const expiresDays = resource.keyConfig?.expiresDays ?? 2;
+  const maxUses = resource.keyConfig?.maxUses ?? 75;
+
   try {
     const result = await generateKey({
       name: slug,
-      expiresDays: resource.keyConfig?.expiresDays ?? 7,
-      maxUses: resource.keyConfig?.maxUses ?? 1,
-      keyType: resource.keyType ?? "regular",
+      expiresDays,
+      maxUses,
+      keyType,
     });
-    return NextResponse.json({ ok: true, key: result.key });
+
+    const now = Date.now();
+    const stored = {
+      key: result.key,
+      expiresAt: now + expiresDays * 24 * 60 * 60 * 1000,
+      maxUses,
+      createdAt: now,
+    };
+    await saveKey(keyType, stored);
+
+    return NextResponse.json({
+      ok: true,
+      key: stored.key,
+      expiresAt: stored.expiresAt,
+      maxUses: stored.maxUses,
+      existing: false,
+    });
   } catch (err) {
     if (err instanceof WorkerError) {
       return NextResponse.json(

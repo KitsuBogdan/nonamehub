@@ -3,16 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useLanguage } from "@/lib/i18n";
-import LanguageSwitcher from "./LanguageSwitcher";
 import Brand from "./Brand";
 
 export default function SiteHeader() {
-  const { t } = useLanguage();
   const pathname = usePathname();
-
-  // Замість окремого `open` — зберігаємо, для якого pathname меню відкрите.
-  // При зміні маршруту open автоматично стає false (openFor !== pathname).
   const [openFor, setOpenFor] = useState<string | null>(null);
   const open = openFor === pathname;
 
@@ -30,20 +24,19 @@ export default function SiteHeader() {
 
       <nav className="main-nav" aria-label="Main navigation">
         <Link className={isHome ? "nav-active" : ""} href="/#catalog">
-          {t("nav.explore")}
+          Explore
         </Link>
         <Link className={isResources ? "nav-active" : ""} href="/resources">
-          {t("nav.resources")}
+          Resources
         </Link>
         <Link className={isAbout ? "nav-active" : ""} href="/about">
-          {t("nav.about")}
+          About
         </Link>
       </nav>
 
       <div className="header-right">
-        <LanguageSwitcher />
         <Link className="submit-link" href="/resources">
-          {t("nav.browse")} <span>↗</span>
+          Browse resources <span>↗</span>
         </Link>
         <button
           type="button"
@@ -60,11 +53,11 @@ export default function SiteHeader() {
 
       {open && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
-          <Link href="/#catalog">{t("nav.explore")}</Link>
-          <Link href="/resources">{t("nav.resources")}</Link>
-          <Link href="/about">{t("nav.about")}</Link>
+          <Link href="/#catalog">Explore</Link>
+          <Link href="/resources">Resources</Link>
+          <Link href="/about">About</Link>
           <Link className="mobile-cta" href="/resources">
-            {t("nav.browse")} ↗
+            Browse resources ↗
           </Link>
         </nav>
       )}

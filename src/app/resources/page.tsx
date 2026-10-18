@@ -47,12 +47,9 @@ export default async function ResourcesPage() {
             >
               <ResourceArtwork resource={r} />
               <div className="p-5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <span className={`category-label label-${r.color}`}>
                     {r.category}
-                  </span>
-                  <span className="text-[10px] text-zinc-500">
-                    ↓ {r.downloads}
                   </span>
                 </div>
                 <h3 className="mt-3 font-[Space_Grotesk] text-base font-semibold">

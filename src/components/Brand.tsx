@@ -1,4 +1,3 @@
-// src/components/Brand.tsx
 import Link from "next/link";
 import Image from "next/image";
 
@@ -12,7 +11,7 @@ export default function Brand({
   const content = (
     <>
       <Image
-        src="/logo.png"
+        src="/logo.webp"
         alt=""
         width={size}
         height={size}

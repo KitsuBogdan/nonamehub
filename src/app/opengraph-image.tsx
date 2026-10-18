@@ -1,23 +1,33 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "fs/promises";
 import path from "path";
+import { SITE } from "@/data/site";
 
 export const alt = "NoNameHub — Roblox resource hub";
 export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const contentType = "image/webp";
 
 async function getLogoDataUri(): Promise<string | null> {
   try {
-    const filePath = path.join(process.cwd(), "public", "logo.png");
+    const filePath = path.join(process.cwd(), "public", "logo.webp");
     const buf = await readFile(filePath);
-    return `data:image/png;base64,${buf.toString("base64")}`;
+    return `data:image/webp;base64,${buf.toString("base64")}`;
   } catch {
     return null;
   }
 }
 
+function siteHost(): string {
+  try {
+    return new URL(SITE.url).host;
+  } catch {
+    return "nonamehub.fyi";
+  }
+}
+
 export default async function OG() {
   const logoUrl = await getLogoDataUri();
+  const host = siteHost();
 
   return new ImageResponse(
     (
@@ -80,7 +90,7 @@ export default async function OG() {
         />
 
         <div style={{ fontSize: 22, color: "#71717a", marginTop: 38 }}>
-          nonamehub.fyi
+          {host}
         </div>
       </div>
     ),

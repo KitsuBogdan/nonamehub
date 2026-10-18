@@ -1,4 +1,3 @@
-// src/components/Toast.tsx
 "use client";
 
 import {
@@ -70,7 +69,8 @@ function ToastItem({
     };
   }, [onDone]);
 
-  const icon = toast.variant === "success" ? "✓" : toast.variant === "error" ? "!" : "·";
+  const icon =
+    toast.variant === "success" ? "✓" : toast.variant === "error" ? "!" : "·";
 
   return (
     <div

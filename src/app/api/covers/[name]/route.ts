@@ -9,7 +9,7 @@ export async function GET(
   if (!obj) return new Response("Not found", { status: 404 });
   return new Response(obj.body, {
     headers: {
-      "Content-Type": obj.httpMetadata?.contentType ?? "image/png",
+      "Content-Type": obj.httpMetadata?.contentType ?? "image/webp",
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });

@@ -1,9 +1,5 @@
-// src/lib/worker.ts
-
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const WORKER_URL =
-  process.env.NONAME_WORKER_URL ?? "https://loader.nonamescr.workers.dev";
+﻿const WORKER_URL =
+  process.env.NONAME_WORKER_URL ?? "https://api.nonamehub.fyi";
 const ADMIN_TOKEN = process.env.NONAME_ADMIN_TOKEN;
 
 export type GeneratedKey = {
@@ -28,33 +24,10 @@ export class WorkerError extends Error {
   }
 }
 
-type ServiceBinding = {
-  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-};
-
-function getLoaderBinding(): ServiceBinding | null {
-  try {
-    const ctx = getCloudflareContext();
-    const env = ctx.env as Record<string, unknown>;
-    const binding = env.LOADER;
-    if (
-      binding &&
-      typeof binding === "object" &&
-      typeof (binding as ServiceBinding).fetch === "function"
-    ) {
-      return binding as ServiceBinding;
-    }
-  } catch {
-    /* не Cloudflare — локальна розробка */
-  }
-  return null;
-}
-
 export async function generateKey(options: {
   name?: string;
   expiresDays?: number;
   maxUses?: number;
-  /** "regular" | "premium" */
   keyType?: string;
 }): Promise<GeneratedKey> {
   if (!ADMIN_TOKEN) {
@@ -72,28 +45,16 @@ export async function generateKey(options: {
     url.searchParams.set("expires", String(options.expiresDays));
   if (options.maxUses != null)
     url.searchParams.set("max_uses", String(options.maxUses));
-  if (options.keyType)
-    url.searchParams.set("type", options.keyType);
+  if (options.keyType) url.searchParams.set("type", options.keyType);
 
-  // ⚠️  LOADER binding disabled — завжди використовуємо NONAME_WORKER_URL (api.nonamehub.fyi)
-  const loader = null as ReturnType<typeof getLoaderBinding>;
-  const targetUrl = url.toString();
   let res: Response;
-
   try {
-    if (loader) {
-      res = await loader.fetch(targetUrl, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
-      });
-    } else {
-      res = await fetch(targetUrl, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
-        cache: "no-store",
-        signal: AbortSignal.timeout(8000),
-      });
-    }
+    res = await fetch(url.toString(), {
+      method: "POST",
+      headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
   } catch {
     throw new WorkerError(
       "Could not reach the key server",

@@ -1,4 +1,3 @@
-// src/components/ScrollTop.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,7 +23,13 @@ export default function ScrollTop() {
       aria-label="Scroll to top"
       className={`scroll-top ${visible ? "visible" : ""}`}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+      >
         <path d="m6 15 6-6 6 6" />
       </svg>
     </button>

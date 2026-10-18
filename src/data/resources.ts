@@ -16,9 +16,8 @@ export type Resource = {
   color: string;
   version: string;
 
-  /** 0 = без кроків (прямий ключ), 1+ = Linkvertise кроки */
+  /** 0 = no steps (direct key), 1+ = Linkvertise steps */
   steps: number;
-  downloads: string;
 
   requiresKey: boolean;
   downloadUrl?: string;
@@ -36,12 +35,12 @@ export type Resource = {
   keyUsage?: string;
   disabled?: boolean;
 
-  /** ID скрипта у loader worker (для /get_script) */
+  /** Script ID in the loader worker (for /get_script) */
   loaderScriptId?: string;
 };
 
-const REGULAR_URL = "https://link-center.net/1343514/Hlzlwx0Sl3Eb";
-const PREMIUM_URL = "https://link-center.net/1343514/Hlzlwx0Sl3Eb";
+const LINKVERTISE_URL = "https://link-center.net/1343514/Hlzlwx0Sl3Eb";
+const KEY_USAGE = "Paste into any NoNameHub script that requires a key.";
 
 export const resources: Resource[] = [
   // ─── Scripts ─────────────────────────────────────────────
@@ -56,14 +55,13 @@ export const resources: Resource[] = [
     color: "violet",
     version: "3.0.0",
     steps: 1,
-    downloads: "1.2k",
     requiresKey: true,
     keyType: "regular",
-    keyConfig: { expiresDays: 7, maxUses: 100 },
-    linkvertise: [{ url: REGULAR_URL, ads: 2, label: "Step 1 of 1" }],
+    keyConfig: { expiresDays: 2, maxUses: 75 },
+    linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
+    cover: "/IWTTG-v3-cover.webp",
     loaderScriptId: "IWTTGame_v3",
-    keyUsage:
-      "Paste this key into Config.Key at the top of the script.",
+    keyUsage: KEY_USAGE,
   },
   {
     slug: "iwttg-v2",
@@ -76,34 +74,29 @@ export const resources: Resource[] = [
     color: "violet",
     version: "2.0.0",
     steps: 1,
-    downloads: "3.4k",
     requiresKey: true,
     keyType: "regular",
-    keyConfig: { expiresDays: 7, maxUses: 100 },
-    linkvertise: [{ url: REGULAR_URL, ads: 2, label: "Step 1 of 1" }],
+    keyConfig: { expiresDays: 2, maxUses: 75 },
+    linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
     loaderScriptId: "IWTTGame_v2",
-    keyUsage:
-      "Paste this key into Config.Key at the top of the script.",
+    keyUsage: KEY_USAGE,
   },
   {
     slug: "iwttg-reworked-beta",
     title: "I Wanna Test The Game (Reworked Beta)",
-    description:
-      "Experimental rework. Archived — may contain bugs.",
+    description: "Experimental rework. Archived — may contain bugs.",
     category: "Scripts",
     type: "Script",
     tag: "BETA",
     color: "violet",
     version: "0.62.0-beta",
     steps: 1,
-    downloads: "800",
     requiresKey: true,
     keyType: "regular",
-    keyConfig: { expiresDays: 7, maxUses: 100 },
-    linkvertise: [{ url: REGULAR_URL, ads: 2, label: "Step 1 of 1" }],
+    keyConfig: { expiresDays: 2, maxUses: 75 },
+    linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
     loaderScriptId: "IWTTGame_reworked_beta",
-    keyUsage:
-      "Paste this key into Config.Key at the top of the script.",
+    keyUsage: KEY_USAGE,
   },
 
   // ─── Keys (universal access) ─────────────────────────────
@@ -118,14 +111,12 @@ export const resources: Resource[] = [
     color: "violet",
     version: "0.1.0",
     steps: 1,
-    downloads: "0",
     requiresKey: true,
     keyType: "regular",
-    keyConfig: { expiresDays: 7, maxUses: 100 },
-    linkvertise: [{ url: REGULAR_URL, ads: 2, label: "Step 1 of 1" }],
-    cover: "/key-cover.png",
-    keyUsage:
-      "Paste this key into Config.Key at the top of any NoNameHub script.",
+    keyConfig: { expiresDays: 2, maxUses: 75 },
+    linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
+    cover: "/key-cover.webp",
+    keyUsage: KEY_USAGE,
   },
   {
     slug: "nn-key-premium",
@@ -138,33 +129,15 @@ export const resources: Resource[] = [
     color: "amber",
     version: "0.1.0",
     steps: 3,
-    downloads: "0",
     requiresKey: true,
     keyType: "premium",
-    keyConfig: { expiresDays: 30, maxUses: 100 },
+    keyConfig: { expiresDays: 2, maxUses: 35 },
     linkvertise: [
-      { url: PREMIUM_URL, ads: 2, label: "Step 1 of 3" },
-      { url: PREMIUM_URL, ads: 2, label: "Step 2 of 3" },
-      { url: PREMIUM_URL, ads: 2, label: "Step 3 of 3" },
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 3" },
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 2 of 3" },
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 3 of 3" },
     ],
-    cover: "/key-cover-premium.png",
-    keyUsage:
-      "Paste this key into Config.Key at the top of the premium script.",
+    cover: "/key-cover-premium.webp",
+    keyUsage: KEY_USAGE,
   },
 ];
-
-export function getCategories(): ResourceCategory[] {
-  return ["Scripts", "Models", "UI", "Key"];
-}
-
-export function getResource(slug: string): Resource | undefined {
-  return resources.find((r) => r.slug === slug);
-}
-
-export function getSimilar(slug: string, limit = 3): Resource[] {
-  const current = getResource(slug);
-  if (!current) return [];
-  return resources
-    .filter((r) => r.slug !== slug && r.category === current.category)
-    .slice(0, limit);
-}

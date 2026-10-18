@@ -15,7 +15,6 @@ const EMPTY: Resource = {
   color: "violet",
   version: "0.1.0",
   steps: 1,
-  downloads: "0",
   requiresKey: true,
   keyConfig: { expiresDays: 7, maxUses: 100 },
   keyType: "regular",
@@ -51,26 +50,30 @@ export default function AdminClient({
 
   useEffect(() => {
     if (!authed) return;
-    // Defer to next microtask so setState in load() runs outside
-    // the synchronous effect body.
+    // Defer to avoid setState synchronously inside the effect body.
     void Promise.resolve().then(load);
   }, [authed]);
 
-  async function login(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    if (res.ok) {
-      setAuthed(true);
-      setPassword("");
-    } else {
-      setError("Wrong password");
-    }
+async function login(e: React.FormEvent) {
+  e.preventDefault();
+  setError(null);
+  const res = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (res.ok) {
+    setAuthed(true);
+    setPassword("");
+    return;
   }
+  const data = await res.json().catch(() => ({}));
+  setError(
+    data.error === "admin_not_configured"
+      ? `Server misconfigured: ${data.detail ?? "check ADMIN_SECRET / ADMIN_PASSWORD"}`
+      : "Wrong password",
+  );
+}
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -86,10 +89,18 @@ export default function AdminClient({
       const url = isNew
         ? "/api/admin/resources"
         : `/api/admin/resources/${draft.slug}`;
+
+      // Keep requiresKey and steps/linkvertise consistent.
+      const normalized: Resource = {
+        ...draft,
+        steps: draft.requiresKey ? Math.max(1, draft.steps) : 0,
+        linkvertise: draft.requiresKey ? draft.linkvertise : undefined,
+      };
+
       const res = await fetch(url, {
         method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(normalized),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -326,16 +337,6 @@ export default function AdminClient({
               />
             </Field>
 
-            <Field label="Downloads (display)">
-              <input
-                value={draft.downloads}
-                onChange={(e) =>
-                  setDraft({ ...draft, downloads: e.target.value })
-                }
-                className="w-full rounded border border-white/10 bg-black/40 px-3 py-2 text-sm"
-              />
-            </Field>
-
             <Field label="Loader script ID">
               <input
                 value={draft.loaderScriptId ?? ""}
@@ -525,7 +526,7 @@ export default function AdminClient({
                 onChange={(e) =>
                   setDraft({ ...draft, cover: e.target.value })
                 }
-                placeholder="/key-cover.png or /covers/..."
+                placeholder="/key-cover.webp or /covers/..."
                 className="flex-1 rounded border border-white/10 bg-black/40 px-3 py-2 text-sm"
               />
             </div>

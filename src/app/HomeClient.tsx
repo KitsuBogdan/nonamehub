@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/lib/i18n";
 import type { Resource } from "@/data/resources";
 import ResourceArtwork from "@/components/ResourceArtwork";
 import HashOverlay, { type OverlayState } from "@/components/HashOverlay";
@@ -47,7 +46,6 @@ function clearHashFromUrl() {
 }
 
 export default function HomeClient({ resources }: { resources: Resource[] }) {
-  const { t } = useLanguage();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("all");
@@ -56,8 +54,6 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
   const handledRef = useRef(false);
 
   async function processHash(hash: string) {
-    // Yield before any setState so this function is never considered
-    // as making a synchronous setState from an effect.
     await Promise.resolve();
 
     const pending = readPending();
@@ -125,8 +121,7 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
     if (!hash) return;
 
     handledRef.current = true;
-    
-    // Defer the call to avoid triggering react-hooks/set-state-in-effect
+
     const timeoutId = setTimeout(() => {
       processHash(hash);
     }, 0);
@@ -136,10 +131,10 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
   }, []);
 
   const categoryTabs: { key: CategoryKey; label: string }[] = [
-    { key: "all", label: t("catalog.all") },
-    { key: "Scripts", label: t("catalog.scripts") },
-    { key: "Models", label: t("catalog.models") },
-    { key: "UI", label: t("catalog.ui") },
+    { key: "all", label: "All resources" },
+    { key: "Scripts", label: "Scripts" },
+    { key: "Models", label: "Models" },
+    { key: "UI", label: "UI" },
     { key: "Key", label: "Keys" },
   ];
 
@@ -176,23 +171,25 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
         />
       )}
 
-      {/* HERO */}
       <section className="hero hero--solo">
         <div className="hero-grid" aria-hidden="true" />
         <div className="hero-content hero-content--centered">
           <div className="eyebrow">
             <span className="status-dot" />
-            {t("hero.eyebrow")}
+            THE COMMUNITY RESOURCE HUB
           </div>
           <h1 className="hero-title">
-            {t("hero.title1")}
+            Build something
             <br />
-            <span>{t("hero.title2")}</span>
+            <span>extraordinary.</span>
           </h1>
-          <p className="hero-copy">{t("hero.copy")}</p>
+          <p className="hero-copy">
+            Discover scripts, models, and UI kits made for your next Roblox
+            project. Find your next starting point.
+          </p>
           <div className="hero-actions">
             <a className="primary-button" href="#catalog">
-              {t("hero.cta")} <span>→</span>
+              Explore resources <span>→</span>
             </a>
             <a
               className="ghost-button"
@@ -211,27 +208,22 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
               ▶ YouTube
             </a>
           </div>
-          <div className="hero-note">
-            <span className="note-icon">✳</span>
-            {t("hero.note")}
-          </div>
         </div>
       </section>
 
-      {/* CATALOG */}
       <section className="catalog-section" id="catalog">
         <div className="section-heading">
           <div>
-            <div className="section-kicker">{t("catalog.kicker")}</div>
+            <div className="section-kicker">THE LIBRARY</div>
             <h2>
-              {t("catalog.title")}
+              Explore resources
               <span>.</span>
             </h2>
-            <p>{t("catalog.subtitle")}</p>
+            <p>Useful building blocks for your next creation.</p>
           </div>
           <div className="resource-count">
             <span className="count-dot" />
-            {filteredResources.length} {t("catalog.count")}
+            {filteredResources.length} resources
           </div>
         </div>
 
@@ -264,8 +256,8 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("catalog.search")}
-              aria-label={t("catalog.search")}
+              placeholder="Search resources..."
+              aria-label="Search resources"
             />
             <kbd>/</kbd>
           </label>
@@ -283,9 +275,6 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
                     >
                       {resource.category}
                     </span>
-                    <span className="download-count">
-                      <span>↓</span> {resource.downloads}
-                    </span>
                   </div>
                   <h3>{resource.title}</h3>
                   <p>{resource.description}</p>
@@ -293,7 +282,7 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
                     className="resource-button"
                     href={`/resource/${resource.slug}`}
                   >
-                    {t("catalog.view")} <span>↗</span>
+                    View resource <span>↗</span>
                   </Link>
                 </div>
               </article>
@@ -302,40 +291,39 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
         ) : (
           <div className="empty-state">
             <span>✦</span>
-            <h3>{t("catalog.empty.title")}</h3>
-            <p>{t("catalog.empty.text")}</p>
+            <h3>No resources found</h3>
+            <p>Try another search or choose a different category.</p>
           </div>
         )}
       </section>
 
-      {/* HOW */}
       <section className="how-section" id="how-it-works">
         <div className="how-heading">
-          <div className="section-kicker">{t("how.kicker")}</div>
+          <div className="section-kicker">SIMPLE BY DESIGN</div>
           <h2>
-            {t("how.title")}
+            From discovery to download
             <span>.</span>
           </h2>
-          <p>{t("how.subtitle")}</p>
+          <p>A straightforward path to the resources you need.</p>
         </div>
         <div className="steps-grid">
           <div className="step-card">
             <span className="step-number">01</span>
             <div className="step-icon">⌕</div>
-            <h3>{t("how.s1.title")}</h3>
-            <p>{t("how.s1.text")}</p>
+            <h3>Find your resource</h3>
+            <p>Explore the library and choose a script, model, or UI kit.</p>
           </div>
           <div className="step-card">
             <span className="step-number">02</span>
             <div className="step-icon">↗</div>
-            <h3>{t("how.s2.title")}</h3>
-            <p>{t("how.s2.text")}</p>
+            <h3>Complete the steps</h3>
+            <p>Follow the access requirements shown on the resource page.</p>
           </div>
           <div className="step-card">
             <span className="step-number">03</span>
             <div className="step-icon">⌘</div>
-            <h3>{t("how.s3.title")}</h3>
-            <p>{t("how.s3.text")}</p>
+            <h3>Get your access</h3>
+            <p>Unlock an available download or receive your access key.</p>
           </div>
         </div>
       </section>

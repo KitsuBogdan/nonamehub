@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getResourceBySlug, getAllResources } from "@/lib/resourcesStore";
+import { readKeysCookie, isKeyValid } from "@/lib/keysCookie";
 import ResourceView from "./ResourceView";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,11 @@ export default async function ResourcePage({
     .filter((r) => r.slug !== slug && r.category === resource.category)
     .slice(0, 3);
 
+  const keyType = resource.keyType ?? "regular";
+  const keys = await readKeysCookie();
+  const cookieKey = keys[keyType];
+  const existingKey = isKeyValid(cookieKey) ? cookieKey : null;
+
   return (
     <>
       <ResourceView
@@ -49,6 +55,7 @@ export default async function ResourcePage({
         resource={resource}
         initialKey={sp.key}
         initialError={sp.err}
+        existingKey={existingKey}
       />
 
       {similar.length > 0 && (
@@ -63,12 +70,9 @@ export default async function ResourcePage({
                 href={`/resource/${r.slug}`}
                 className="group rounded-xl border border-white/10 bg-white/3 p-4 transition hover:-translate-y-0.5 hover:border-violet-400/40"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <span className="text-[10px] font-semibold text-violet-300">
                     {r.category}
-                  </span>
-                  <span className="text-[10px] text-zinc-500">
-                    ↓ {r.downloads}
                   </span>
                 </div>
                 <h3 className="mt-2 font-[Space_Grotesk] text-sm font-semibold">

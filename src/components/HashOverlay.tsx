@@ -2,7 +2,13 @@
 
 export type OverlayState =
   | { kind: "checking" }
-  | { kind: "next"; completed: number; next: number; total: number; nextUrl: string }
+  | {
+      kind: "next";
+      completed: number;
+      next: number;
+      total: number;
+      nextUrl: string;
+    }
   | { kind: "error"; message: string };
 
 export default function HashOverlay({
