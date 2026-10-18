@@ -1,4 +1,4 @@
-export type ResourceCategory = "Scripts" | "Models" | "UI" | "Key";
+export type ResourceCategory = "Scripts" | "UI" | "Key";
 
 export type LinkvertiseStep = {
   url: string;
@@ -78,6 +78,7 @@ export const resources: Resource[] = [
     keyType: "regular",
     keyConfig: { expiresDays: 2, maxUses: 75 },
     linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
+    cover: "/IWTTG-v2-cover.webp",
     loaderScriptId: "IWTTGame_v2",
     keyUsage: KEY_USAGE,
   },
@@ -95,6 +96,7 @@ export const resources: Resource[] = [
     keyType: "regular",
     keyConfig: { expiresDays: 2, maxUses: 75 },
     linkvertise: [{ url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 1" }],
+    cover: "/IWTTG-beta-reworked-cover.webp",
     loaderScriptId: "IWTTGame_reworked_beta",
     keyUsage: KEY_USAGE,
   },
@@ -102,9 +104,9 @@ export const resources: Resource[] = [
   // ─── Keys (universal access) ─────────────────────────────
   {
     slug: "nn-key",
-    title: "Universal Access Key",
+    title: "Regular Access Key", // <--- ЗМІНЕНО
     description:
-      "One key for all NoNameHub scripts. Get it once, use it everywhere.",
+      "Unlocks all standard scripts in the hub. One key works everywhere.", // <--- ЗМІНЕНО
     category: "Key",
     type: "Key",
     tag: "KEY",
@@ -120,9 +122,9 @@ export const resources: Resource[] = [
   },
   {
     slug: "nn-key-premium",
-    title: "Premium Access Key",
+    title: "Premium Access Key", // <--- ЗМІНЕНО
     description:
-      "Premium key for advanced features. Requires completing 3 steps (2 ads each).",
+      "Unlocks premium scripts and advanced features. Requires 3 steps to generate.", // <--- ЗМІНЕНО
     category: "Key",
     type: "Key",
     tag: "PREMIUM",

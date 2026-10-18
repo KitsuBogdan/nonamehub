@@ -52,10 +52,10 @@ export default function AdBlockDetector({
               Ad blocker detected
             </h3>
             <p className="mt-1 text-sm leading-6 text-amber-200/80">
-              Please disable your ad blocker to unlock this resource. Ads are what keep NoNameHub free.
+              Disable your ad blocker to access this resource. Ads keep NoNameHub running.
             </p>
             <p className="mt-2 text-xs leading-5 text-amber-200/60">
-              Turn off any ad-blocking extensions (uBlock, AdBlock Plus, Brave Shields) and reload the page.
+              Turn off extensions like uBlock, AdBlock Plus, or Brave Shields, then reload the page.
             </p>
           </div>
         </div>

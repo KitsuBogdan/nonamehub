@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Resource } from "@/data/resources";
+import type { Resource, ResourceCategory } from "@/data/resources";
 import ResourceArtwork from "@/components/ResourceArtwork";
 import HashOverlay, { type OverlayState } from "@/components/HashOverlay";
 import { SITE } from "@/data/site";
 
-type CategoryKey = "all" | "Scripts" | "Models" | "UI" | "Key";
+type CategoryKey = "all" | ResourceCategory;
 
 type PendingKey = { slug: string; token: string; step: number; ts: number };
 const PENDING_TTL_MS = 15 * 60 * 1000;
@@ -130,13 +130,20 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const categoryTabs: { key: CategoryKey; label: string }[] = [
-    { key: "all", label: "All resources" },
-    { key: "Scripts", label: "Scripts" },
-    { key: "Models", label: "Models" },
-    { key: "UI", label: "UI" },
-    { key: "Key", label: "Keys" },
-  ];
+  // Динамічно формуємо вкладки категорій на основі наявних ресурсів
+  const categoryTabs = useMemo(() => {
+    const availableCategories = Array.from(
+      new Set(resources.filter((r) => !r.disabled).map((r) => r.category))
+    );
+    
+    return [
+      { key: "all" as CategoryKey, label: "All resources" },
+      ...availableCategories.map((cat) => ({
+        key: cat as CategoryKey,
+        label: cat === "Key" ? "Keys" : cat,
+      })),
+    ];
+  }, [resources]);
 
   const filteredResources = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -176,21 +183,17 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
         <div className="hero-content hero-content--centered">
           <div className="eyebrow">
             <span className="status-dot" />
-            THE COMMUNITY RESOURCE HUB
+            ROBLOX STUDIO RESOURCES
           </div>
           <h1 className="hero-title">
-            Build something
+            Scripts & UI
             <br />
-            <span>extraordinary.</span>
+            <span>for Roblox.</span>
           </h1>
           <p className="hero-copy">
-            Discover scripts, models, and UI kits made for your next Roblox
-            project. Find your next starting point.
+            Free scripts, UI libraries, and access keys. No paywalls, just the tools you need.
           </p>
           <div className="hero-actions">
-            <a className="primary-button" href="#catalog">
-              Explore resources <span>→</span>
-            </a>
             <a
               className="ghost-button"
               href={SITE.discord}
@@ -214,12 +217,8 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
       <section className="catalog-section" id="catalog">
         <div className="section-heading">
           <div>
-            <div className="section-kicker">THE LIBRARY</div>
-            <h2>
-              Explore resources
-              <span>.</span>
-            </h2>
-            <p>Useful building blocks for your next creation.</p>
+            <div className="section-kicker">ALL RESOURCES</div>
+            <h2>Resources</h2>
           </div>
           <div className="resource-count">
             <span className="count-dot" />
@@ -299,19 +298,17 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
 
       <section className="how-section" id="how-it-works">
         <div className="how-heading">
-          <div className="section-kicker">SIMPLE BY DESIGN</div>
+          <div className="section-kicker">HOW IT WORKS</div>
           <h2>
-            From discovery to download
-            <span>.</span>
+            Get access in <span> 3 </span> steps
           </h2>
-          <p>A straightforward path to the resources you need.</p>
         </div>
         <div className="steps-grid">
           <div className="step-card">
             <span className="step-number">01</span>
             <div className="step-icon">⌕</div>
-            <h3>Find your resource</h3>
-            <p>Explore the library and choose a script, model, or UI kit.</p>
+            <h3>Find a resource</h3>
+            <p>Pick a script or UI library from the catalog.</p>
           </div>
           <div className="step-card">
             <span className="step-number">02</span>
@@ -323,7 +320,7 @@ export default function HomeClient({ resources }: { resources: Resource[] }) {
             <span className="step-number">03</span>
             <div className="step-icon">⌘</div>
             <h3>Get your access</h3>
-            <p>Unlock an available download or receive your access key.</p>
+            <p>Get your key or download.</p>
           </div>
         </div>
       </section>

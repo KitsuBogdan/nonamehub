@@ -4,8 +4,7 @@ import { getAllResources } from "@/lib/resourcesStore";
 
 export const metadata: Metadata = {
   title: "About",
-  description:
-    "NoNameHub is a community resource hub for Roblox developers.",
+  description: "A free collection of scripts and UI libraries for Roblox Studio.",
 };
 
 export const dynamic = "force-dynamic";
@@ -26,14 +25,13 @@ export default async function Page() {
 
       <section className="mt-8 rounded-3xl border border-white/10 bg-white/3 p-6 sm:p-10">
         <p className="text-[10px] font-bold tracking-[2px] text-violet-300/80">
-          ABOUT / NONAMEHUB
+          ABOUT
         </p>
         <h1 className="mt-4 font-[Space_Grotesk] text-4xl font-semibold tracking-tight sm:text-6xl">
-          Resource hub for Roblox.
+          The NoNameHub project.
         </h1>
         <p className="mt-5 max-w-2xl text-sm leading-7 text-zinc-400">
-          NoNameHub is a community project with useful scripts, models, and UI
-          kits for Roblox Studio developers.
+          A collection of free scripts and UI libraries for Roblox Studio.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -58,15 +56,9 @@ export default async function Page() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-violet-400/20 bg-violet-400/6 p-6">
-          <h2 className="font-[Space_Grotesk] text-lg font-semibold">
-            Looking for something specific?
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">
-            Browse the full catalog and find the building blocks you need.
-          </p>
           <Link
             href="/resources"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-violet-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-violet-500 to-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5"
           >
             Browse catalog →
           </Link>

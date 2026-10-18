@@ -210,7 +210,7 @@ export default function ResourceView({
           {resource.description}
         </p>
       </header>
-
+      
       {loaderSnippet && (
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/3 p-6">
           <h2 className="font-[Space_Grotesk] text-lg font-semibold">
@@ -225,7 +225,7 @@ export default function ResourceView({
           <div className="mt-4">
             <div className="mb-1 text-xs text-zinc-500">Loader</div>
             <div className="flex items-start gap-2">
-              <code className="flex-1 overflow-x-auto whitespace-pre rounded bg-black/40 px-3 py-2 text-xs text-violet-200">
+              <code className="code-scroll flex-1 overflow-x-auto whitespace-pre rounded bg-black/40 px-3 py-2 pb-3 text-xs text-violet-200">
                 {loaderSnippet}
               </code>
               <button

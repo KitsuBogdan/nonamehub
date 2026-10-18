@@ -12,23 +12,23 @@ export default function Page() {
       kicker="LEGAL"
       title="Privacy Policy"
       updated="Last updated: October 2026"
-      intro="Your privacy matters to us. This policy explains what data we collect and how we use it."
+      intro="NoNameHub is built to be as private as possible. We don't require accounts, and we don't track you."
       sections={[
         {
           title: "Data we collect",
-          text: "We only collect the information you provide directly — such as your email if you choose to contact us.",
-        },
-        {
-          title: "How we use your data",
-          text: "Your data is used solely to respond to your messages. We do not sell or rent your data to third parties.",
+          text: "We do not have contact forms, user accounts, or newsletter signups. We do not collect your name, email, or any personal information.",
         },
         {
           title: "Cookies",
-          text: "We use minimal local storage to improve your experience. No third-party tracking cookies are used.",
+          text: "We use strictly essential cookies only: 'nh_keys' (to save your generated access keys locally so you don't have to redo the Linkvertise steps) and 'nh_admin' (to authenticate the site administrator). No third-party tracking or advertising cookies are used.",
         },
         {
-          title: "Your rights",
-          text: "You can request access, correction, or deletion of your personal data at any time.",
+          title: "Third-party services",
+          text: "When generating keys, you are redirected to Linkvertise. Please refer to their Privacy Policy for how they handle data. We do not sell, rent, or share any data with third parties.",
+        },
+        {
+          title: "Contact",
+          text: "If you have any questions or need your data removed, the only way to reach us is through our official Discord server.",
         },
       ]}
     />

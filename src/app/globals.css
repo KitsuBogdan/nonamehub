@@ -194,8 +194,20 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .search-box kbd { border: 1px solid #373542; border-radius: 4px; min-width: 19px; text-align: center; font-size: 10px; padding: 2px 4px; color: #777487; }
 
 .resource-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
-.resource-card { overflow: hidden; border: 1px solid #252530; background: #101017; border-radius: 13px; transition: transform .25s, border-color .25s, box-shadow .25s; }
+
+/* Зміни для вирівнювання карток */
+.resource-card { 
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  overflow: hidden; 
+  border: 1px solid #252530; 
+  background: #101017; 
+  border-radius: 13px; 
+  transition: transform .25s, border-color .25s, box-shadow .25s; 
+}
 .resource-card:hover { transform: translateY(-4px); border-color: #5a477e; box-shadow: 0 16px 38px #0002; }
+
 .artwork { height: 166px; position: relative; display: grid; place-items: center; overflow: hidden; isolation: isolate; }
 .artwork::before { content: ""; position: absolute; inset: 0; opacity: .35; background-image: linear-gradient(#ffffff09 1px, transparent 1px), linear-gradient(90deg, #ffffff09 1px, transparent 1px); background-size: 25px 25px; }
 .artwork-violet { background: radial-gradient(ellipse at 50% 45%, #4d327c 0, #211a35 48%, #14131e 100%); }
@@ -221,13 +233,29 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .ui-art-panel div { height: 12px; border-radius: 3px; background: linear-gradient(90deg, #a78bfa44 0 35%, #ffffff0e 35%); }
 .ui-art-panel div:nth-child(2) { width: 78%; }.ui-art-panel div:nth-child(3) { width: 88%; }
 
-.resource-card-body { padding: 17px 17px 16px; }
+/* Зміни для вирівнювання карток */
+.resource-card-body { 
+  padding: 17px 17px 16px; 
+  display: flex; 
+  flex-direction: column; 
+  flex: 1; 
+}
 .resource-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .category-label { font-size: 9px; font-weight: 600; }
 .label-violet { color: #c2aaff; }.label-blue { color: #8cc6ff; }.label-orange { color: #ffc18d; }.label-green { color: #8de4c0; }.label-pink { color: #f5a7d4; }.label-cyan { color: #86dff0; }
 .label-amber { color: #fcd34d; }
 .resource-card h3 { font: 600 16px "Space Grotesk", sans-serif; letter-spacing: -.3px; margin: 13px 0 7px; }
-.resource-card p { min-height: 38px; margin: 0; color: #9290a2; font-size: 11px; line-height: 1.7; }
+
+/* Зміни для вирівнювання карток */
+.resource-card p { 
+  flex: 1; 
+  min-height: 38px; 
+  margin: 0; 
+  color: #9290a2; 
+  font-size: 11px; 
+  line-height: 1.7; 
+}
+
 .resource-button {
   display: flex; justify-content: space-between; align-items: center; width: 100%;
   margin-top: 18px; padding: 11px 12px; border: 1px solid #302d3b;
@@ -692,4 +720,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .hero.hero--solo .ghost-button {
     width: 100%;
   }
+}
+
+.code-scroll::-webkit-scrollbar {
+  display: none;
+}
+.code-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

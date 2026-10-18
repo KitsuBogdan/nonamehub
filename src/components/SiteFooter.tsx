@@ -11,9 +11,6 @@ export default function SiteFooter() {
           <div className="font-[Space_Grotesk] text-xl font-semibold">
             NoNameHub
           </div>
-          <p className="mt-2 text-sm text-zinc-500">
-            A hub for your next idea.
-          </p>
           <div className="mt-4 flex gap-2">
             <a
               href={SITE.discord}

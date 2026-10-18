@@ -21,8 +21,7 @@ export default function NotFound() {
         </h1>
 
         <p className="mt-4 text-sm leading-7 text-zinc-400">
-          Looks like this page got lost somewhere between dimensions of Roblox
-          Studio. The link may be outdated or the resource was removed.
+          The page you are looking for doesn&apos;t exist or has been moved.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

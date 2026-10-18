@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     template: "%s — NoNameHub",
   },
   description:
-    "Scripts, models, and UI kits for your next Roblox Studio project.",
+    "Free scripts, UI libraries, and keys for your next Roblox Studio project.",
   keywords: [
     "Roblox",
     "Roblox Studio",
     "Roblox scripts",
-    "Roblox models",
     "Roblox UI",
+    "Roblox keys",
     "game development",
   ],
   authors: [{ name: "NoNameHub" }],
@@ -41,13 +41,13 @@ export const metadata: Metadata = {
     siteName: "NoNameHub",
     title: "NoNameHub — Roblox resource hub",
     description:
-      "Scripts, models, and UI kits for your next Roblox Studio project.",
+      "Free scripts, UI libraries, and keys for your next Roblox Studio project.",
   },
   twitter: {
     card: "summary_large_image",
     title: "NoNameHub — Roblox resource hub",
     description:
-      "Scripts, models, and UI kits for your next Roblox Studio project.",
+      "Free scripts, UI libraries, and keys for your next Roblox Studio project.",
   },
   icons: { icon: "/logo.webp", apple: "/logo.webp" },
   robots: { index: true, follow: true },
