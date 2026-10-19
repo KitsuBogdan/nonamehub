@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Brand from "./Brand";
 
+import { URLS } from "@/lib/urls";
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const [openFor, setOpenFor] = useState<string | null>(null);
@@ -14,28 +16,30 @@ export default function SiteHeader() {
     setOpenFor((prev) => (prev === pathname ? null : pathname));
   };
 
-  const isHome = pathname === "/";
-  const isResources = pathname.startsWith("/resources");
-  const isAbout = pathname.startsWith("/about");
+  // Оскільки при доступі через library.nonamehub.fyi/lib шлях може відрізнятися,
+  // перевіряємо чи поточний шлях закінчується на потрібний.
+  const isHome = pathname === "/" || pathname === "/lib";
+  const isResources = pathname.includes("/resources");
+  const isAbout = pathname.includes("/about");
 
   return (
     <header className="site-header">
       <Brand />
 
       <nav className="main-nav" aria-label="Main navigation">
-        <Link className={isHome ? "nav-active" : ""} href="/#catalog">
+        <Link className={isHome ? "nav-active" : ""} href={URLS.explore} prefetch={false}>
           Explore
         </Link>
-        <Link className={isResources ? "nav-active" : ""} href="/resources">
+        <Link className={isResources ? "nav-active" : ""} href={URLS.resources} prefetch={false}>
           Resources
         </Link>
-        <Link className={isAbout ? "nav-active" : ""} href="/about">
+        <Link className={isAbout ? "nav-active" : ""} href={URLS.about} prefetch={false}>
           About
         </Link>
       </nav>
 
       <div className="header-right">
-        <Link className="submit-link" href="/resources">
+        <Link className="submit-link" href={URLS.resources} prefetch={false}>
           Browse resources <span>↗</span>
         </Link>
         <button
@@ -53,10 +57,10 @@ export default function SiteHeader() {
 
       {open && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
-          <Link href="/#catalog">Explore</Link>
-          <Link href="/resources">Resources</Link>
-          <Link href="/about">About</Link>
-          <Link className="mobile-cta" href="/resources">
+          <Link href={URLS.explore} prefetch={false}>Explore</Link>
+          <Link href={URLS.resources} prefetch={false}>Resources</Link>
+          <Link href={URLS.about} prefetch={false}>About</Link>
+          <Link className="mobile-cta" href={URLS.resources} prefetch={false}>
             Browse resources ↗
           </Link>
         </nav>

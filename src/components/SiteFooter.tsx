@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SITE } from "@/data/site";
+import { URLS } from "@/lib/urls";
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
@@ -39,12 +40,12 @@ export default function SiteFooter() {
           </h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/resources" className="text-zinc-400 hover:text-white">
+              <Link href={URLS.resources} prefetch={false} className="text-zinc-400 hover:text-white">
                 All resources
               </Link>
             </li>
             <li>
-              <Link href="/#how-it-works" className="text-zinc-400 hover:text-white">
+              <Link href={URLS.howItWorks} prefetch={false} className="text-zinc-400 hover:text-white">
                 How it works
               </Link>
             </li>
@@ -85,17 +86,17 @@ export default function SiteFooter() {
           </h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/about" className="text-zinc-400 hover:text-white">
+              <Link href={URLS.about} prefetch={false} className="text-zinc-400 hover:text-white">
                 About
               </Link>
             </li>
             <li>
-              <Link href="/terms" className="text-zinc-400 hover:text-white">
+              <Link href={URLS.terms} prefetch={false} className="text-zinc-400 hover:text-white">
                 Terms of Service
               </Link>
             </li>
             <li>
-              <Link href="/privacy" className="text-zinc-400 hover:text-white">
+              <Link href={URLS.privacy} prefetch={false} className="text-zinc-400 hover:text-white">
                 Privacy Policy
               </Link>
             </li>
