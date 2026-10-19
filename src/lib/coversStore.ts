@@ -15,14 +15,14 @@ type R2 = {
 };
 
 type CloudflareEnv = {
-  RESOURCES_R2?: R2;
+  nonamehub_covers?: R2;
 };
 
 async function getR2(): Promise<R2 | null> {
   try {
     const ctx = getCloudflareContext();
     const env = (ctx.env as CloudflareEnv | undefined) ?? {};
-    return env.RESOURCES_R2 ?? null;
+    return env.nonamehub_covers ?? null;
   } catch {
     return null;
   }
