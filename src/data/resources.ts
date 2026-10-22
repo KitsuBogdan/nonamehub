@@ -64,6 +64,29 @@ export const resources: Resource[] = [
     keyUsage: KEY_USAGE,
   },
   {
+    slug: "iwttg-v3-premium",
+    title: "I Wanna Test The Game v3 Premium",
+    description:
+      "Premium build of v3 with extra features and priority access. Requires a premium key.",
+    category: "Scripts",
+    type: "Script",
+    tag: "PREMIUM",
+    color: "amber",
+    version: "3.0.0-premium",
+    steps: 3,
+    requiresKey: true,
+    keyType: "premium",
+    keyConfig: { expiresDays: 2, maxUses: 35 },
+    linkvertise: [
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 1 of 3" },
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 2 of 3" },
+      { url: LINKVERTISE_URL, ads: 2, label: "Step 3 of 3" },
+    ],
+    cover: "/IWTTG-V3-premium-cover.webp",
+    loaderScriptId: "IWTTGame_v3_premium",
+    keyUsage: KEY_USAGE,
+  },
+  {
     slug: "iwttg-v2",
     title: "I Wanna Test The Game v2",
     description:
