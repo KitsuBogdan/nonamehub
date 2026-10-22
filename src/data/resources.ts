@@ -101,12 +101,29 @@ export const resources: Resource[] = [
     keyUsage: KEY_USAGE,
   },
 
+  // ─── UI (free, no key, no steps) ─────────────────────────
+  {
+    slug: "nonameui",
+    title: "Noname UI Library",
+    description:
+      "Modern, modular, high-performance UI library for Roblox. 21+ elements, 9 themes, lazy loading. Free & open-source.",
+    category: "UI",
+    type: "Library",
+    tag: "UI",
+    color: "cyan",
+    version: "1.16.1",
+    steps: 0,
+    requiresKey: false,
+    downloadUrl: "https://library.nonamehub.fyi/wiki",
+    cover: "/nonameUI-cover.webp",
+  },
+
   // ─── Keys (universal access) ─────────────────────────────
   {
     slug: "nn-key",
-    title: "Regular Access Key", // <--- ЗМІНЕНО
+    title: "Regular Access Key",
     description:
-      "Unlocks all standard scripts in the hub. One key works everywhere.", // <--- ЗМІНЕНО
+      "Unlocks all standard scripts in the hub. One key works everywhere.",
     category: "Key",
     type: "Key",
     tag: "KEY",
@@ -122,9 +139,9 @@ export const resources: Resource[] = [
   },
   {
     slug: "nn-key-premium",
-    title: "Premium Access Key", // <--- ЗМІНЕНО
+    title: "Premium Access Key",
     description:
-      "Unlocks premium scripts and advanced features. Requires 3 steps to generate.", // <--- ЗМІНЕНО
+      "Unlocks premium scripts and advanced features. Requires 3 steps to generate.",
     category: "Key",
     type: "Key",
     tag: "PREMIUM",
